@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "drone"
+			"path" : "NetExample"
 		}
 	],
 	"backtrace" : 1,
@@ -56,11 +56,12 @@
 			"language" : "CXX",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				1
 			]
 		}
 	],
-	"id" : "drone::@6890427a1f51a3e7e1df",
+	"id" : "NetExample::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
@@ -155,8 +156,8 @@
 		],
 		"language" : "CXX"
 	},
-	"name" : "drone",
-	"nameOnDisk" : "drone",
+	"name" : "NetExample",
+	"nameOnDisk" : "NetExample",
 	"paths" : 
 	{
 		"build" : ".",
@@ -168,7 +169,8 @@
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				1
 			]
 		}
 	],
@@ -177,7 +179,13 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "src/framesBuffer.cpp",
+			"path" : "src/Example.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/NetConf.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],

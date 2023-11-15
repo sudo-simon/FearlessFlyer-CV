@@ -151,8 +151,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/lor3n/Dev/drone_test/build",
-		"source" : "/home/lor3n/Dev/drone_test"
+		"build" : "/home/lor3n/Dev/RTMP/network/build",
+		"source" : "/home/lor3n/Dev/RTMP/network"
 	},
 	"version" : 
 	{

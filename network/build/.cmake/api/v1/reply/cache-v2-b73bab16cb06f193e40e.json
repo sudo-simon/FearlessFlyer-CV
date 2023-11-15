@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/lor3n/Dev/drone_test/build"
+			"value" : "/home/lor3n/Dev/RTMP/network/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -591,7 +591,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/lor3n/Dev/drone_test"
+			"value" : "/home/lor3n/Dev/RTMP/network"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -835,7 +835,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "drone_map"
+			"value" : "NetExample"
 		},
 		{
 			"name" : "CMAKE_RANLIB",
@@ -1130,19 +1130,7 @@
 			"value" : "[/usr/local][v4.8.0()]"
 		},
 		{
-			"name" : "OpenCV_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "The directory containing a CMake configuration file for OpenCV."
-				}
-			],
-			"type" : "PATH",
-			"value" : "/usr/local/lib/cmake/opencv4"
-		},
-		{
-			"name" : "drone_map_BINARY_DIR",
+			"name" : "NetExample_BINARY_DIR",
 			"properties" : 
 			[
 				{
@@ -1151,10 +1139,10 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/lor3n/Dev/drone_test/build"
+			"value" : "/home/lor3n/Dev/RTMP/network/build"
 		},
 		{
-			"name" : "drone_map_IS_TOP_LEVEL",
+			"name" : "NetExample_IS_TOP_LEVEL",
 			"properties" : 
 			[
 				{
@@ -1166,7 +1154,7 @@
 			"value" : "ON"
 		},
 		{
-			"name" : "drone_map_SOURCE_DIR",
+			"name" : "NetExample_SOURCE_DIR",
 			"properties" : 
 			[
 				{
@@ -1175,7 +1163,55 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/lor3n/Dev/drone_test"
+			"value" : "/home/lor3n/Dev/RTMP/network"
+		},
+		{
+			"name" : "Network_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/home/lor3n/Dev/RTMP/network/build"
+		},
+		{
+			"name" : "Network_IS_TOP_LEVEL",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "ON"
+		},
+		{
+			"name" : "Network_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/home/lor3n/Dev/RTMP/network"
+		},
+		{
+			"name" : "OpenCV_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "The directory containing a CMake configuration file for OpenCV."
+				}
+			],
+			"type" : "PATH",
+			"value" : "/usr/local/lib/cmake/opencv4"
 		}
 	],
 	"kind" : "cache",

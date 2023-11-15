@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
-project(drone_map)
+project(NetExample)
 
 find_package(OpenCV REQUIRED)
-add_executable(drone src/framesBuffer.cpp)
+add_executable(NetExample src/Example.cpp src/NetConf.cpp)
 
-target_link_libraries(drone ${OpenCV_LIBS})
+target_link_libraries(NetExample ${OpenCV_LIBS})
