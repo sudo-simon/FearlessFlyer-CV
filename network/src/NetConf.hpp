@@ -9,21 +9,21 @@
 class NetConf {
 
     private:
-        std::string serverIP;
+        std::string serverIp;
         std::string rtmpLink;
 
     public:
 
-        NetConf(std::string& ip) : serverIP(ip) {}
+        NetConf(std::string& ip) : serverIp(ip) {}
         ~NetConf() {};
 
 
-        inline void SetRtmpLink(std::string ip) {serverIP = ip;}
-        inline void SetServerIP(std::string ip, std::string key) {rtmpLink = "rtmp://"+ip+":1935/"+key+"/live";}
-        inline void SetServerIP(std::string ip) {rtmpLink = "rtmp://"+ip+":1935/live";}
+        inline void SetServerIp(std::string ip) {serverIp = ip;}
+        inline void BindRtmpLink(std::string key) {rtmpLink = "rtmp://"+serverIp+":1935/live/"+key;}
+        inline void BindRtmpLink() {rtmpLink = "rtmp://"+serverIp+":1935/live";}
         
         inline std::string GetRtmpLink() const {return rtmpLink;}
-        inline std::string GetServerIP() const {return serverIP;}
+        inline std::string GetServerIP() const {return serverIp;}
 
         void ServerStart() const;
         void ServerStop() const;

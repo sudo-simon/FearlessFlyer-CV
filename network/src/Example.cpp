@@ -1,6 +1,7 @@
 #include "NetConf.hpp"
 
 int VideoStream(std::string rtmpAddress){
+
     cv::VideoCapture cap(0); 
     if (!cap.isOpened()) { 
         return -1;
@@ -24,26 +25,24 @@ int VideoStream(std::string rtmpAddress){
 
 int main(){
 
-    //Installa nginx
+    // Installa nginx
 
     std::string ip;
     std::cout << "Network IP address: ";
     std::cin >> ip; 
 
     NetConf network(ip);
-    //network.ServerStart();
-    network.SetServerIP(ip);
+    std::cout << network.RTMPconfig();
+    network.ServerStart();
+    network.BindRtmpLink();
     std::cout << "RTMP address: " << network.GetRtmpLink()<< std::endl;
 
-    std::string wait;
-    std::cin >> wait; 
-
-    // "rtmp://192.168.1.123:1935/live/test"
+    // rtmp://192.168.1.123:1935/live/test
     int res = VideoStream(network.GetRtmpLink());
     if(res == -1){
-        std::cerr << "VideoStream() ERROR.";
+        std::cerr << "VideoStream() ERROR." << std::endl;
     }
 
-    //network.ServerStop();
+    network.ServerStop();
 }
 
