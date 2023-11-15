@@ -1,21 +1,10 @@
+#pragma once
+
 #include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <memory>
-#include <stdexcept>
 #include <string>
-#include <array>
 #include <fstream>
 #include <opencv2/opencv.hpp>
-
 #include <regex>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h> 
-
-
-
 
 class NetConf {
 
@@ -30,14 +19,27 @@ class NetConf {
 
 
         inline void SetRtmpLink(std::string ip) {serverIP = ip;}
-        inline void SetServerIP(std::string ip) {rtmpLink = ip;}
+        inline void SetServerIP(std::string ip, std::string key) {rtmpLink = "rtmp://"+ip+":1935/"+key+"/live";}
+        inline void SetServerIP(std::string ip) {rtmpLink = "rtmp://"+ip+":1935/live";}
+        
         inline std::string GetRtmpLink() const {return rtmpLink;}
         inline std::string GetServerIP() const {return serverIP;}
 
-        int ServerStart() const;
-        int ServerStop() const;
-        int ServerStatus() const;
-        int RTMPconfig() const;
-        static inline void exec(const char* cmd);
+        void ServerStart() const;
+        void ServerStop() const;
+        void ServerStatus() const;
+        std::string RTMPconfig() const;
+        
+
+        static inline void exec(const char* cmd){
+            std::array<char, 128> buffer;
+            std::string result;
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+
+            std::string cmd_string = cmd;
+            if (!pipe) {
+                throw std::runtime_error("popen() failed with "+cmd_string);
+            }
+        }
 
 };

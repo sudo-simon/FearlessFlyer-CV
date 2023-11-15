@@ -1,5 +1,27 @@
 #include "NetConf.hpp"
 
+int VideoStream(std::string rtmpAddress){
+    cv::VideoCapture cap(0); 
+    if (!cap.isOpened()) { 
+        return -1;
+    }
+
+    while (true) {
+        cv::Mat frame;
+        cap >> frame; 
+        if (frame.empty())
+            break; 
+
+        cv::imshow("RTMP", frame);
+
+        if (cv::waitKey(30) >= 0){
+            break;
+        }
+    }
+    cap.release();
+    return 0;
+}
+
 int main(){
 
     //Installa nginx
@@ -9,38 +31,19 @@ int main(){
     std::cin >> ip; 
 
     NetConf network(ip);
-    int res;
-    res = network.ServerStart();
-    std::cout << "Server started." << std::endl;
+    //network.ServerStart();
+    network.SetServerIP(ip);
+    std::cout << "RTMP address: " << network.GetRtmpLink()<< std::endl;
 
-    std::string rtmpAddress = "rtmp://"+ip+":1935/live"; 
-    std::cout << "RTMP address: " << rtmpAddress << std::endl;
+    std::string wait;
+    std::cin >> wait; 
 
-    /*
-    cv::VideoCapture cap(rtmpAddress); 
-    if (!cap.isOpened()) { 
-        return -1;
+    // "rtmp://192.168.1.123:1935/live/test"
+    int res = VideoStream(network.GetRtmpLink());
+    if(res == -1){
+        std::cerr << "VideoStream() ERROR.";
     }
 
-    cv::Mat frame;
-    while (true) {
-        cap >> frame; 
-        if (frame.empty())
-            break; 
-
-        cv::imshow("RTMP", frame);
-
-        if (cv::waitKey(30) >= 0)
-            break;
-    }
-
-    cap.release();
-    */
-
-    try {
-        exec("systemctl stop nginx");
-    } catch (const std::runtime_error& e) {
-        std::cerr << e.what() << '\n';
-    }
-    std::cout << "Server stopped." << std::endl;
+    //network.ServerStop();
 }
+

@@ -1,40 +1,31 @@
-#pragma once
-
 #include "NetConf.hpp"
 
-static inline void exec(const char* cmd){
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
 
-    std::string cmd_string = cmd;
-    if (!pipe) {
-        throw std::runtime_error("popen() failed with "+cmd_string);
-    }
-}
-
-int NetConf::ServerStart() const{
+void NetConf::ServerStart() const{
     try {
-        NetConf.exec("systemctl start nginx");
+        NetConf::exec("systemctl start nginx");
     } catch (const std::runtime_error& e) {
         std::string error = e.what();
         throw std::runtime_error(error+"\n");
     }
+
+    std::cout << "Server started." << std::endl;
 }
 
-
-int NetConf::ServerStop() const{
+void NetConf::ServerStop() const{
     try {
-        NetConf.exec("systemctl stop nginx");
+        NetConf::exec("systemctl stop nginx");
     } catch (const std::runtime_error& e) {
         std::string error = e.what();
         throw std::runtime_error(error+"\n");
     }
+
+    std::cout << "Server stopped." << std::endl;
 }
 
-int NetConf::ServerStatus() const{
+void NetConf::ServerStatus() const{
     try {
-        NetConf.exec("systemctl status nginx");
+        NetConf::exec("systemctl status nginx");
     } catch (const std::runtime_error& e) {
         std::string error = e.what();
         throw std::runtime_error(error+"\n");
