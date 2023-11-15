@@ -2,7 +2,7 @@
 
 int VideoStream(std::string rtmpAddress){
 
-    cv::VideoCapture cap(0); 
+    cv::VideoCapture cap(rtmpAddress); 
     if (!cap.isOpened()) { 
         return -1;
     }
