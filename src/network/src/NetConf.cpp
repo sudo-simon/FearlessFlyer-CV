@@ -3,7 +3,7 @@
 
 void NetConf::ServerStart() const{
     try {
-        NetConf::exec("systemctl start nginx");
+        NetConf::exec("sudo systemctl start nginx");
     } catch (const std::runtime_error& e) {
         std::string error = e.what();
         throw std::runtime_error(error+"\n");
@@ -14,7 +14,7 @@ void NetConf::ServerStart() const{
 
 void NetConf::ServerStop() const{
     try {
-        NetConf::exec("systemctl stop nginx");
+        NetConf::exec("sudo systemctl stop nginx");
     } catch (const std::runtime_error& e) {
         std::string error = e.what();
         throw std::runtime_error(error+"\n");
@@ -25,7 +25,7 @@ void NetConf::ServerStop() const{
 
 void NetConf::ServerStatus() const{
     try {
-        NetConf::exec("systemctl status nginx");
+        NetConf::exec("sudo systemctl status nginx");
     } catch (const std::runtime_error& e) {
         std::string error = e.what();
         throw std::runtime_error(error+"\n");
@@ -33,39 +33,54 @@ void NetConf::ServerStatus() const{
 }
 
 std::string NetConf::RTMPconfig() const{
+
     std::ifstream file("/etc/nginx/nginx.conf"); 
-    
+    std::ofstream outfile("/etc/nginx/temp.conf");
     std::string toFind = "rtmp"; 
-    std::string rtmpConfiguration = "rtmp { " 
-	                                "    server {"
-		                            "        listen 1935;"
-		                            "        chunk_size 4096;"
-		                            "        application live {"
-			                        "            live on;"
-			                        "            record off;"
-			                        "            allow publish all;"
-			                        "            allow play all;"
-		                            "        }"
-	                                "    }"
-                                    "}";
+    std::string rtmpConfiguration = "\nrtmp {\n" 
+	                                "    server {\n"
+		                            "        listen "+serverPort+";\n"
+		                            "        chunk_size 4096;\n"
+                                    "\n"
+		                            "        application live {\n"
+			                        "            live on;\n"
+			                        "            record off;\n"
+			                        "            allow publish all;\n"
+			                        "            allow play all;\n"
+		                            "        }\n"
+	                                "    }\n"
+                                    "}\n";
     
-    std::string line;
-    if (file.is_open()) {
-        while (getline(file, line)) {
-
-            if (line.find(toFind) != std::string::npos) {
-                return "RTMP already setup.\n";
-            }
-
-        }
-        file.close();
-
-
-        std::ofstream file("/etc/nginx/nginx.conf");
-        file << rtmpConfiguration << std::endl;
-        return "RTMP setup done.\n";
-
-    } else {
-        return "Unable to open file.\n";
+   
+    if(!file.is_open()){
+        return "diocan\n";
     }
+       
+    std::string line;
+    while (getline(file, line)) {
+        if (line.find(toFind) != std::string::npos) {
+            break;
+        }
+
+        outfile << line  << std::endl;
+    }
+
+    outfile << rtmpConfiguration;
+    file.close();
+    outfile.close();
+    std::remove("/etc/nginx/nginx.conf");
+    std::rename("/etc/nginx/temp.conf", "/etc/nginx/nginx.conf");
+    return "RTMP setup done.\n";
+}
+
+void NetConf::SearchBindPort(){
+
+    const int startPort = 30000;
+    for (int port = startPort; port < 65535; ++port) {
+        if (NetConf::IsPortFree(port)) {
+            this->serverPort = std::to_string(port);
+            break;
+        }
+    }
+
 }

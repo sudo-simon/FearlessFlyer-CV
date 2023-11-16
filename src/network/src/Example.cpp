@@ -32,10 +32,17 @@ int main(){
     std::cin >> ip; 
 
     NetConf network(ip);
-    std::cout << network.RTMPconfig();
+    network.SearchBindPort();
+    std::cout << network.RTMPconfig() << std::endl;
     network.ServerStart();
-    network.BindRtmpLink();
+    network.BindRtmpLink("test");
     std::cout << "RTMP address: " << network.GetRtmpLink()<< std::endl;
+
+
+    std::cout << "Press <ENTER> to start capturing." << std::endl;
+    std::cin.ignore();
+    std::cin.ignore();
+    std::cout << "Capturing..." << std::endl;
 
     // rtmp://192.168.1.123:1935/live/test
     int res = VideoStream(network.GetRtmpLink());
