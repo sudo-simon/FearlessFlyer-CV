@@ -22,8 +22,8 @@ find_package(glfw3 REQUIRED)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++20")
-#add_compile_options(-O2)
-#add_compile_options(-g)
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
 file(GLOB SOURCE_FILES "${SRC_DIR}/main.cpp")
