@@ -6,7 +6,7 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 set(LIB_DIR "${SRC_DIR}/libs/")
 
 
-#~~~~~ JUST COMPILE THE ONE YOU NEED, NOT ALL OF THEM
+#~~~~~ JUST COMPILE THE ONES YOU NEED, NOT ALL OF THEM
 file(GLOB IMGUI_SRC 
     "${LIB_DIR}/imgui/*.cpp" 
     "${LIB_DIR}/imgui/backends/imgui_impl_opengl3.cpp"
@@ -30,7 +30,6 @@ file(GLOB SOURCE_FILES "${SRC_DIR}/main.cpp")
 add_executable(FF-CV ${SOURCE_FILES})
 
 
-include_directories(SYSTEM "/usr/include/GLFW/")
 include_directories(SYSTEM ${LIB_DIR})
 include_directories(${SRC_DIR})
 
