@@ -201,6 +201,7 @@ int p2b::Bitmap::fromImage_linear(cv::Mat* img_ptr){
             
             //? Because of how this piece of code works, if we want to keep the 1, 11, 1111 values reserved
             //? we have to ensure that the last threshold value is 255 for pixel_size != 1
+            //? This should be enforced in the source code that calls this function
             
             p_value = 0;
             for (uint8_t& threshold : this->thresholds_v){
@@ -460,7 +461,7 @@ int p2b::Bitmap::updateFromImage(cv::Mat* update_img_ptr){
 
 /*
     Function to update only a region of the original bitmap,
-    start_row and start_col are teh indexes from which to start updating,
+    start_row and start_col are the indexes from which to start updating,
     referring to image pixel indexes and not to bitmap's
 */
 int p2b::Bitmap::updateRegionFromImage(cv::Mat* update_img_ptr, long start_row, long start_col){
@@ -501,6 +502,13 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction, bool minima
     long start_row;
     long start_col;
     vector<vector<uint8_t>> tmp_vec = p2b::toBits(img_ptr, this->pixel_size, this->thresholds_v);
+
+    /*
+        ? This part of the code is quite tricky and most likely requires some graphical aid
+        ? to be understood. After some debugging and fixing it should finally be correct.
+        ? Let's pray Stallman to never have to fix this again.
+    */
+
     switch (add_direction) {
         
         case p2b::DIR_UP:
@@ -513,7 +521,7 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction, bool minima
                     ), 
                     MAX_SIZE(
                         this->cols, 
-                        img_cols + this->cols - this->last_add_c0
+                        img_cols + this->last_add_c0
                     ), 
                     add_direction
                 );
@@ -584,7 +592,7 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction, bool minima
                 this->increaseSize(
                     MAX_SIZE(
                         this->rows, 
-                        img_rows + this->rows - this->last_add_r0
+                        img_rows + this->last_add_r0
                     ), 
                     MAX_SIZE(
                         this->cols, 
@@ -605,6 +613,7 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction, bool minima
     
     }
 
+    //? Update the values of the last added image
     this->last_add_r0 = start_row;
     this->last_add_c0 = start_col;
     this->last_add_height = img_rows;
