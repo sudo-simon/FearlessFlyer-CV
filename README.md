@@ -4,20 +4,24 @@ A real-time landscape mapper that makes use of the RTMP protocol and a drone
 ## Requirements
 
 ### ffmpeg
-
+```console
 sudo apt install ffmpeg
+```
 
 ### nginx
-
+```console
 sudo add-apt-repository universe
 sudo apt install libnginx-mod-rtmp
-
+```
 ## Dependencies
 
 ### Dear ImGui
 
+[imgui-github](https://github.com/ocornut/imgui)
+
 ### GLFW
-
-### OpenGL 3 with GLEW
-
-
+```console
+sudo apt install libglfw3
+sudo apt install libglfw3-dev
+sudo apt install xorg-dev
+```
