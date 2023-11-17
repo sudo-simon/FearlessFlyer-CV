@@ -9,13 +9,17 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <vector>
 
 class NetConf {
 
     private:
-        std::string serverIp;
-        std::string serverPort;
-        std::string rtmpLink;
+        
+        std::string port;
+        std::string internalRtmpLink;
+        std::string externalRtmpLink;
+        std::string externalIp;
+        const std::string internalIp = "127.0.0.1";
 
         static bool IsPortFree(int port) {
             int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -40,25 +44,26 @@ class NetConf {
 
     public:
 
-        NetConf(std::string& ip) : serverIp(ip) {}
-        ~NetConf() {};
+        NetConf() {}
+        ~NetConf() {}
 
 
-        inline void SetServerIp(std::string ip) {serverIp = ip;}
-        inline void BindRtmpLink(std::string key) {rtmpLink = "rtmp://"+serverIp+":"+serverPort+"/live/"+key;}
-        inline void BindRtmpLink() {rtmpLink = "rtmp://"+serverIp+":"+serverPort+"/live";}
+        void BindIp();
         void SearchBindPort();
+        void BindRtmpLink(std::string key);
+        void BindRtmpLink();
         
-        inline std::string GetRtmpLink() const {return rtmpLink;}
-        inline std::string GetServerIP() const {return serverIp;}
+        inline std::string GetExternalRtmpLink() const {return externalRtmpLink;}
+        inline std::string GetExternalIP() const {return externalIp;}
+        inline std::string GetInternalRtmpLink() const {return internalRtmpLink;}
 
         void ServerStart() const;
         void ServerStop() const;
         void ServerStatus() const;
-        std::string RTMPconfig() const;
+        int RTMPconfig() const;
         
 
-        static void exec(const char* cmd){
+        static std::string exec(const char* cmd){
             std::array<char, 128> buffer;
             std::string result;
             std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
@@ -67,6 +72,11 @@ class NetConf {
             if (!pipe) {
                 throw std::runtime_error("popen() failed with "+cmd_string);
             }
+
+            while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                result += buffer.data();
+            }
+            return result;
         }
 
 };
