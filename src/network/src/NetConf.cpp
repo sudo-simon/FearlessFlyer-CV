@@ -105,7 +105,7 @@ void NetConf::BindIp(){
     for(std::string ip : IPs){
         ipRegex = "(?:[0-9]{1,3}\\.){3}[0-9]{1,3}";
         std::regex_search(ip, matches, ipRegex);
-        if(matches[0].str() == "120.0.0.1"){
+        if(matches[0].str() == "127.0.0.1"){
             continue;
         }
 
