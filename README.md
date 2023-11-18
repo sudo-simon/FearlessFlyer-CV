@@ -21,7 +21,5 @@ sudo apt install libnginx-mod-rtmp
 
 ### GLFW
 ```console
-sudo apt install libglfw3
-sudo apt install libglfw3-dev
-sudo apt install xorg-dev
+sudo apt install libglfw3 libglfw3-dev xorg-dev
 ```

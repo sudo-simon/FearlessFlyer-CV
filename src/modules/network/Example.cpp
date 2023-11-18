@@ -23,7 +23,7 @@ int VideoStream(std::string rtmpAddress){
     return 0;
 }
 
-int main(){
+int Network_demo(){
 
     // Installa nginx
 
@@ -46,5 +46,6 @@ int main(){
     }
 
     network.ServerStop();
+    return 0;
 }
 

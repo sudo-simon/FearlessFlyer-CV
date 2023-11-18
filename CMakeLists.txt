@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(FF-CV)
 
 
@@ -26,7 +26,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
-file(GLOB SOURCE_FILES "${SRC_DIR}/main.cpp")
+file(GLOB SOURCE_FILES "${SRC_DIR}/Main.cpp")
 add_executable(FF-CV ${SOURCE_FILES})
 
 
