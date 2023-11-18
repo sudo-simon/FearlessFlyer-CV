@@ -2,7 +2,7 @@
 
 int VideoStream(std::string rtmpAddress){
 
-    cv::VideoCapture cap(0); 
+    cv::VideoCapture cap(rtmpAddress); 
     if (!cap.isOpened()) { 
         return -1;
     }
@@ -23,26 +23,29 @@ int VideoStream(std::string rtmpAddress){
     return 0;
 }
 
-int main(){
+int Network_demo(){
 
     // Installa nginx
 
-    std::string ip;
-    std::cout << "Network IP address: ";
-    std::cin >> ip; 
-
-    NetConf network(ip);
-    std::cout << network.RTMPconfig();
+    NetConf network;
+    network.BindIp();
+    network.SearchBindPort();
+    network.RTMPconfig();
     network.ServerStart();
-    network.BindRtmpLink();
-    std::cout << "RTMP address: " << network.GetRtmpLink()<< std::endl;
+    network.BindRtmpLink("test");
+    std::cout << "RTMP address: " << network.GetExternalRtmpLink()<< std::endl;
 
-    // rtmp://192.168.1.123:1935/live/test
-    int res = VideoStream(network.GetRtmpLink());
+
+    std::cout << "Press <ENTER> to start capturing." << std::endl;
+    std::cin.ignore();
+    std::cout << "Capturing..." << std::endl;
+
+    int res = VideoStream(network.GetInternalRtmpLink());
     if(res == -1){
         std::cerr << "VideoStream() ERROR." << std::endl;
     }
 
     network.ServerStop();
+    return 0;
 }
 
