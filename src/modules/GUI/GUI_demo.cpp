@@ -11,6 +11,7 @@
 #include "libs/imgui/backends/imgui_impl_glfw.h"
 #include "libs/imgui/backends/imgui_impl_opengl3.h"
 #include <stdio.h>
+#include <opencv2/opencv.hpp>
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -25,6 +26,7 @@ static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
+
 
 // Main code
 int GUI_demo()
@@ -42,7 +44,7 @@ int GUI_demo()
 
 
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "RTMP", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -92,9 +94,19 @@ int GUI_demo()
     //IM_ASSERT(font != nullptr);
 
     // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
+    bool show_demo_window = false;
+    bool show_image_viewer = false;
+    bool show_help_window = false;
+    bool serverOn = false;
+    bool isCapturing = false;
+    bool errorCapturing = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    cv::Mat image = cv::imread( "../images/lena.png", cv::IMREAD_COLOR );
+    if( image.empty() ){
+        return -1;
+    }
+    cv::cvtColor( image, image, cv::COLOR_BGR2RGBA );
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -112,43 +124,81 @@ int GUI_demo()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+
+        //ImGui demo window
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+        if(show_help_window)
         {
             static float f = 0.0f;
-            static int counter = 0;
+            ImGui::Begin("Help");
+            ImGui::Text("From the ImGui Demo:");              
+            ImGui::Checkbox("Demo Window", &show_demo_window); 
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); 
+            ImGui::End();
+        }
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+        {
+            ImGui::Begin("Settings");            
+            ImGui::Checkbox("Image Viewer", &show_image_viewer);
+            ImGui::Checkbox("Help", &show_help_window);
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+            if (ImGui::Button("Start nginx server"))
+                serverOn = !serverOn;
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            if(serverOn){
+                ImGui::SameLine();                            
+                ImGui::Text("Server On.");
+            }
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
+            if(ImGui::Button("Start Capturing")){
+                if(serverOn){
+                    isCapturing = true;
+                    errorCapturing = false;
+                } else {
+                    errorCapturing = true;
+                }
+            }
+
+            if(isCapturing && serverOn){
+                ImGui::SameLine();                            
+                ImGui::Text("Capturing frames.");
+            }
+
+            if(errorCapturing){
+                ImGui::SameLine();                            
+                ImGui::Text("Starver is not working.");
+            }
+
+            if(ImGui::Button("Stop nginx server")){
+                isCapturing = false;
+                serverOn  = false;
+            }
+
+            if(!serverOn){
+                ImGui::SameLine();                            
+                ImGui::Text("Server Off.");
+            }
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
         }
 
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
+        //Window with image showing
+        if(show_image_viewer){
+            ImGui::Begin("Image Viewer");    
+            GLuint texture;
+            glGenTextures( 1, &texture );
+            glBindTexture( GL_TEXTURE_2D, texture );
+            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+            glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+            glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, image.cols, image.rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data );
+            ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture ) ), ImVec2( image.cols, image.rows ) );
             ImGui::End();
         }
-
         // Rendering
         ImGui::Render();
         int display_w, display_h;
