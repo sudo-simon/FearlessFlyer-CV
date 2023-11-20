@@ -27,6 +27,17 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+static void ImageViewer(cv::Mat& image){
+    GLuint texture;
+    glGenTextures( 1, &texture );
+    glBindTexture( GL_TEXTURE_2D, texture );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, image.cols, image.rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data );
+    ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture ) ), ImVec2( image.cols, image.rows ) );
+}
+
 
 // Main code
 int GUI_demo()
@@ -95,22 +106,25 @@ int GUI_demo()
 
     // Our state
     bool show_demo_window = false;
-    bool show_image_viewer = false;
+    bool show_map_viewer = false;
+    bool show_capture_viewer = false;
     bool show_help_window = false;
     bool serverOn = false;
     bool isCapturing = false;
     bool errorCapturing = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImGuiWindowFlags window_flags = 0;
 
-    cv::Mat image = cv::imread( "../images/lena.png", cv::IMREAD_COLOR );
-    if( image.empty() ){
+    cv::Mat testImage = cv::imread( "../images/lena.png", cv::IMREAD_COLOR );
+    if( testImage.empty() ){
         return -1;
     }
-    cv::cvtColor( image, image, cv::COLOR_BGR2RGBA );
+    cv::cvtColor(testImage, testImage, cv::COLOR_BGR2RGBA);
+    cv::VideoCapture cap(0);
+
 
     // Main loop
     while (!glfwWindowShouldClose(window))
-
     {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -124,6 +138,7 @@ int GUI_demo()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        //START UI
 
         //ImGui demo window
         if (show_demo_window)
@@ -142,7 +157,8 @@ int GUI_demo()
 
         {
             ImGui::Begin("Settings");            
-            ImGui::Checkbox("Image Viewer", &show_image_viewer);
+            ImGui::Checkbox("Map Viewer", &show_map_viewer);
+            ImGui::Checkbox("Capture Viewer", &show_capture_viewer);
             ImGui::Checkbox("Help", &show_help_window);
 
             if (ImGui::Button("Start nginx server"))
@@ -186,19 +202,28 @@ int GUI_demo()
             ImGui::End();
         }
 
-        //Window with image showing
-        if(show_image_viewer){
-            ImGui::Begin("Image Viewer");    
-            GLuint texture;
-            glGenTextures( 1, &texture );
-            glBindTexture( GL_TEXTURE_2D, texture );
-            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-            glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-            glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
-            glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, image.cols, image.rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data );
-            ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture ) ), ImVec2( image.cols, image.rows ) );
+
+        if(show_map_viewer){
+            window_flags = ImGuiWindowFlags_NoCollapse;
+            ImGui::Begin("Map Viewer", NULL, window_flags);    
+            ImageViewer(testImage);
             ImGui::End();
         }
+
+        //Window with image showing
+        if(show_capture_viewer){
+
+            cv::Mat frame;
+            cap >> frame;
+            cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+            window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoCollapse;
+            ImGui::Begin("Live Capture", NULL, window_flags);    
+            ImageViewer(frame);
+            ImGui::End();
+        }
+
+        //END UI
+
         // Rendering
         ImGui::Render();
         int display_w, display_h;
