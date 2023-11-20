@@ -3,6 +3,8 @@
 
 #include "modules/network/Example.cpp"
 #include "modules/network/NetConf.cpp"
+
+//#include "modules/Threading/Threading_demo.cpp"
 //? -------------------------------------
 
 #include <iostream>
@@ -21,6 +23,7 @@ int main(int argc, char** argv){
         "Pass one of the following arguments:\n"
         "\t--gui : test the GUI module\n"
         "\t--net : test the network module\n"
+        //"\t--cap : test the capture via FIFOBuffer and Bitmap\n"
         << endl;
         exit(0);
     }
