@@ -18,6 +18,8 @@
 #endif
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
+#include "Console.cpp"
+
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
 // Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
@@ -55,7 +57,7 @@ int GUI_demo()
 
 
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "RTMP", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "RTMP", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -109,6 +111,7 @@ int GUI_demo()
     bool show_map_viewer = false;
     bool show_capture_viewer = false;
     bool show_help_window = false;
+    bool show_console = false;
     bool serverOn = false;
     bool isCapturing = false;
     bool errorCapturing = false;
@@ -121,6 +124,8 @@ int GUI_demo()
     }
     cv::cvtColor(testImage, testImage, cv::COLOR_BGR2RGBA);
     cv::VideoCapture cap(0);
+
+    Console myConsole;
 
 
     // Main loop
@@ -140,7 +145,94 @@ int GUI_demo()
 
         //START UI
 
-        //ImGui demo window
+        if(show_console){
+            window_flags = 0;
+            ImGui::Begin("Console", NULL, window_flags);
+            ImGui::Text("%s", myConsole.GetConsoleText().c_str());
+            if(ImGui::Button("Clear"))
+                myConsole.Clear();
+            ImGui::End();
+        }
+
+        {
+            ImGui::Begin("Settings");            
+            ImGui::Checkbox("Console", &show_console);
+            ImGui::Checkbox("Map Viewer", &show_map_viewer);
+            ImGui::Checkbox("Capture Viewer", &show_capture_viewer);
+            ImGui::Checkbox("Help", &show_help_window);
+
+            if (ImGui::Button("Start nginx server")){
+                if(!serverOn){   
+                    myConsole.PrintUI("Server ON");
+                } else {  
+                    myConsole.PrintUI("Server already started.");
+                }
+                serverOn = !serverOn;    
+            }
+
+            if(serverOn){
+                ImGui::SameLine();                   
+                ImGui::Text("ON");
+            } else {
+                ImGui::SameLine();                            
+                ImGui::Text("OFF");
+            }
+
+            if(ImGui::Button("Start Capturing")){
+                if(serverOn){
+                    isCapturing = true;
+                    errorCapturing = false; 
+                    myConsole.PrintUI("Capturing...");
+                } else {
+                    errorCapturing = true; 
+                    myConsole.PrintUI("Error: Can't start capturing, the server is off");
+                }
+            }
+
+            if(isCapturing && serverOn){
+                ImGui::SameLine();                            
+                ImGui::Text("Capturing frames.");
+            }
+
+            if(errorCapturing){
+                ImGui::SameLine();                            
+                ImGui::Text("Error");
+            }
+
+            if(ImGui::Button("Stop nginx server")){
+                if(serverOn){ 
+                    myConsole.PrintUI("Server OFF");
+                } else {   
+                    myConsole.PrintUI("Server already stopped.");
+                }
+                isCapturing = false;
+                serverOn  = false;
+            }
+
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::End();
+        }
+
+
+        if(show_map_viewer){
+            window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground;
+            ImGui::Begin("Map Viewer", NULL, window_flags);    
+            ImageViewer(testImage);
+            ImGui::End();
+        }
+
+        if(show_capture_viewer){
+
+            cv::Mat frame;
+            cap >> frame;
+            cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+            window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+            ImGui::Begin("Live Capture", NULL, window_flags);    
+            ImageViewer(frame);
+            ImGui::End();
+        }
+
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
@@ -152,73 +244,6 @@ int GUI_demo()
             ImGui::Checkbox("Demo Window", &show_demo_window); 
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            
             ImGui::ColorEdit3("clear color", (float*)&clear_color); 
-            ImGui::End();
-        }
-
-        {
-            ImGui::Begin("Settings");            
-            ImGui::Checkbox("Map Viewer", &show_map_viewer);
-            ImGui::Checkbox("Capture Viewer", &show_capture_viewer);
-            ImGui::Checkbox("Help", &show_help_window);
-
-            if (ImGui::Button("Start nginx server"))
-                serverOn = !serverOn;
-
-            if(serverOn){
-                ImGui::SameLine();                            
-                ImGui::Text("Server On.");
-            }
-
-            if(ImGui::Button("Start Capturing")){
-                if(serverOn){
-                    isCapturing = true;
-                    errorCapturing = false;
-                } else {
-                    errorCapturing = true;
-                }
-            }
-
-            if(isCapturing && serverOn){
-                ImGui::SameLine();                            
-                ImGui::Text("Capturing frames.");
-            }
-
-            if(errorCapturing){
-                ImGui::SameLine();                            
-                ImGui::Text("Starver is not working.");
-            }
-
-            if(ImGui::Button("Stop nginx server")){
-                isCapturing = false;
-                serverOn  = false;
-            }
-
-            if(!serverOn){
-                ImGui::SameLine();                            
-                ImGui::Text("Server Off.");
-            }
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-
-        if(show_map_viewer){
-            window_flags = ImGuiWindowFlags_NoCollapse;
-            ImGui::Begin("Map Viewer", NULL, window_flags);    
-            ImageViewer(testImage);
-            ImGui::End();
-        }
-
-        //Window with image showing
-        if(show_capture_viewer){
-
-            cv::Mat frame;
-            cap >> frame;
-            cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-            window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoCollapse;
-            ImGui::Begin("Live Capture", NULL, window_flags);    
-            ImageViewer(frame);
             ImGui::End();
         }
 

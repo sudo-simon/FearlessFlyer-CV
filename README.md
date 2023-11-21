@@ -15,11 +15,18 @@ sudo apt install libnginx-mod-rtmp
 ```
 ## Dependencies
 
+### OpenCV 4.8
+
+[opencv-github](https://github.com/opencv/opencv)
+
 ### Dear ImGui
 
 [imgui-github](https://github.com/ocornut/imgui)
 
-### GLFW
+### GLFW and OPENGL
 ```console
 sudo apt install libglfw3 libglfw3-dev xorg-dev
+sudo apt install freeglut3-dev
 ```
+
+### Boost
