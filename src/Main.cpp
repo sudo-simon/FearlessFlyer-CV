@@ -4,7 +4,12 @@
 #include "modules/network/Example.cpp"
 #include "modules/network/NetConf.cpp"
 
-//#include "modules/Threading/Threading_demo.cpp"
+#include "modules/Threading/Threading_demo.cpp"
+//? -------------------------------------
+//? Local libraries to be tested ----------
+#include "libs/p2b/bitmap.cpp"
+#include "libs/p2b/core.cpp"
+#include "libs/p2b/utils.cpp"
 //? -------------------------------------
 
 #include <iostream>
@@ -23,7 +28,7 @@ int main(int argc, char** argv){
         "Pass one of the following arguments:\n"
         "\t--gui : test the GUI module\n"
         "\t--net : test the network module\n"
-        //"\t--cap : test the capture via FIFOBuffer and Bitmap\n"
+        "\t--thr : test the capture via FIFOBuffer and Bitmap\n"
         << endl;
         exit(0);
     }
@@ -32,7 +37,8 @@ int main(int argc, char** argv){
     //? Function pointers to be called via passed arguments, update when needed
     vector<int(*)()> function_pointers = {
         GUI_demo, 
-        Network_demo
+        Network_demo,
+        Threading_demo
     };
 
     int function_i = -1;
@@ -49,6 +55,10 @@ int main(int argc, char** argv){
         }
         if (arg == "--net"){
             function_i = 1;
+            break;
+        }
+        if (arg == "--thr"){
+            function_i = 2;
             break;
         }
     }

@@ -5,6 +5,8 @@ project(FF-CV)
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 set(LIB_DIR "${SRC_DIR}/libs/")
 
+set(P2B_DIR "${LIB_DIR}/p2b/")
+
 
 #~~~~~ JUST COMPILE THE ONES YOU NEED, NOT ALL OF THEM
 file(GLOB IMGUI_SRC 

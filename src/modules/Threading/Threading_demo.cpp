@@ -3,91 +3,121 @@
 #include "libs/p2b/core.hpp"
 #include "libs/p2b/bitmap.hpp"
 
+#include "CaptureThread.hpp"
+
+#include <boost/interprocess/creation_tags.hpp>
 #include <cstdlib>
-#include <opencv2/highgui.hpp>
+#include <cstring>
+#include <opencv4/opencv2/highgui.hpp>
+#include <opencv4/opencv2/core/mat.hpp>
 #include <sys/types.h>
 #include <thread>
 
 #include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 
 using namespace std;
-
+using namespace boost::interprocess;
 
 //? Multithread experiment with FIFOBuffer
 
 
+//? Test thread class to experiment with a bitmap
+class BitmapThread {
 
+    private:
+        p2b::Bitmap frame_bitmap;
 
-int captureThread(std::string rtmpAddress){
+        const char* shmem_name;
+        long shmem_size;
+        int shmem_frames;
+        shared_memory_object shmem;
+        mapped_region mem_region;
+        FrameMessage* shmem_ptr;
 
-    FIFOBuffer<cv::Mat> frame_buffer(32);
-    FIFOBuffer<cv::Mat>* frameBuffer_ptr = &frame_buffer;
+    public:
 
-    FIFOBuffer<int> direction_buffer(32);
-    FIFOBuffer<int>* directionBuffer_ptr = &direction_buffer;
-
-
-    cv::VideoCapture cap(rtmpAddress); 
-    if (!cap.isOpened()) { 
-        return -1;
-    }
-
-    cv::Mat frame;
-    int pressed_key = -1;
-    cv::namedWindow("RTMP capture");
-
-    while (true) {
-        cap >> frame; 
-        if (frame.empty())
-            break; 
-
-        cv::imshow("RTMP capture", frame);
-        pressed_key = cv::pollKey();
-
-        switch (pressed_key) {
+        BitmapThread(
+            const char* shmem_name,
+            const long shmem_size,
+            const int shmem_frames
+        ){
+            this->frame_bitmap = p2b::Bitmap(
+                800,
+                200,
+                2,
+                {85, 170, 255}
+            );
             
-            case 82:    //? UP
-                frame_buffer.push(frame);
-                break;
-            
-            case 83:    //? RIGHT
-                break;
-            
-            case 84:    //? DOWN
-                break;
-            
-            case 81:    //? LEFT
-                break;
-            
-            default:
-                cout << "Pressed key = " << pressed_key << endl;
-                break;
+            this->shmem_name = shmem_name;
+            this->shmem_size = shmem_size;
+            this->shmem_frames = shmem_frames;
+            this->shmem = shared_memory_object(
+                open_only,
+                this->shmem_name,
+                read_write
+            );
+            this->mem_region = mapped_region(this->shmem, read_write);
+            this->shmem_ptr = (FrameMessage*) mem_region.get_address();
+
         }
-    }
+        
+        ~BitmapThread(){
+            shared_memory_object::remove(this->shmem_name);
+        }
+        
 
-    //END:
-    cv::destroyAllWindows();
-    cap.release();
+        // Thread start method
+        void start(){
 
-    return 0;
+            cout << "---- BITMAP THREAD STARTED ----\n" << endl;
 
-}
+            cv::namedWindow(
+                "Bitmap visualization"
+                //TODO add flags and size
+            );
+            cv::Mat outImg;
 
+            this->frame_bitmap.toGrayscaleImage_parallel(
+                &outImg, 
+                {85,170,255}
+            );
+            cout << "BMP_TH: Bitmap object created\n" << endl;
 
-int bitmapThread(){
+            // Main loop        
+            while(1){
 
-    p2b::Bitmap frame_bitmap(
-        800,
-        200,
-        2,
-        {85, 170, 255}
-    );
+                cv::imshow("Bitmap visualization", outImg);
+                //if (cv::pollKey() == palle) break;
+                
+                if (!isShmemEmpty(this->shmem_ptr, this->shmem_size)){
 
-    cv::namedWindow("Bitmap visualization");
-    
-    return 0;
+                    cout << "BMP_TH: SHMEM FULL! ADDING FRAMES\n" << endl;
 
-}
+                    for(int i=0; i<this->shmem_frames; ++i){
+                        this->frame_bitmap.addImage(
+                            &this->shmem_ptr[i].frame, 
+                            this->shmem_ptr[i].add_direction, 
+                            true
+                        );
+                    }
+
+                    this->frame_bitmap.toGrayscaleImage_parallel(
+                        &outImg, 
+                        {85,175,255}
+                    );
+
+                    // Emptying shmem
+                    memset((char*) this->shmem_ptr, 0, this->shmem_size);
+                }
+
+            }
+
+            cv::destroyAllWindows();
+
+        }
+
+};
 
 
 
@@ -102,30 +132,51 @@ int bitmapThread(){
 
 
 int Threading_demo(){
+    
+    // Experimental parameters
+    const long initial_buffer_capacity = 32;
+    const char* shmem_name = "frame_shmem";
+    const long shmem_size = 100'000;
+    const int shmem_frames = 5;
 
-    // Installa nginx
+    //! SHMEM REMOVER, REALLY IMPORTANT
+    struct shm_remove
+    {   //! Can't use shmem_name var here, hard coded name
+        shm_remove() { shared_memory_object::remove("frame_shmem"); }
+        ~shm_remove(){ shared_memory_object::remove("frame_shmem"); }
+    } remover;
 
-    NetConf network;
-    network.BindIp();
-    network.SearchBindPort();
-    network.RTMPconfig();
-    network.ServerStart();
-    network.BindRtmpLink("test");
-    std::cout << "RTMP address: " << network.GetExternalRtmpLink()<< std::endl;
+    //Shmem init
+    shared_memory_object shmem = shared_memory_object(
+        create_only, shmem_name, read_write
+    );
+    shmem.truncate(shmem_size);
+    mapped_region mem_region = mapped_region(
+        shmem, read_write
+    );
+    memset(mem_region.get_address(), 0, shmem_size);
 
+    // Thread classes init
+    CaptureThread capThread = CaptureThread(
+        initial_buffer_capacity,
+        shmem_name,
+        shmem_size,
+        shmem_frames
+    );
 
-    std::cout << "Press <ENTER> to start capturing." << std::endl;
-    std::cin.ignore();
-    std::cout << "Capturing..." << std::endl;
+    BitmapThread bmpThread = BitmapThread(
+        shmem_name,
+        shmem_size,
+        shmem_frames
+    );
 
-    thread capture_thread = thread(captureThread,network.GetInternalRtmpLink());
-    thread bitmap_thread = thread(bitmapThread);
+    // Thread starts
+    thread capture_thread = thread(&CaptureThread::start, &capThread);
+    thread bitmap_thread = thread(&BitmapThread::start, &bmpThread);
 
-    int res = capture_thread.join();
-    if(res == -1){
-        std::cerr << "VideoStream() ERROR." << std::endl;
-    }
+    // Thread join
+    capture_thread.join();
+    bitmap_thread.join();
 
-    network.ServerStop();
     return 0;
 }
