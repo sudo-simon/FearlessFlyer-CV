@@ -1,0 +1,59 @@
+
+#include FramesHunter
+#include FramesStitcher
+#include NetConf
+#include DearImGui + OpenGL + glfw
+#include thread
+
+
+int main(){
+
+	thread hunterThread
+	thread stitcherThread
+
+	while(true){
+	
+	// POLLING
+	
+	
+	//Buttons window
+	Begin()
+	if(Button("Start Server"))
+		-> NetConf.StartServer()
+		-> NetConf.PrintServerLink()
+	
+	
+	if(Button("Stop Server"))
+		-> Hunter.StopActivity() -> stop thread (maybe using thread forced termination)
+		-> Stitcher.StopActivity() -> stop thread (maybe using thread forced termination)
+		-> NetConf.StopServer()
+	
+	if(Button("Start Capturing"))
+		-> hunterThread = new thread(Hunter.StartActivity)
+		-> stitcherThread = new thread(Stitcher.StartActivity)
+		
+	if(Button("Stop Capturing"))
+		-> Hunter.StopActivity() -> close thread (maybe using thread forced termination)
+		-> Stitcher.StopActivity() -> close thread (maybe using thread forced termination)
+		-> NetConf.StopServer()
+	End()
+	
+	
+	
+	//Map Window
+	Begin()
+	ImageViewer(stitcher.GetMap())	
+	End()
+	
+	
+	//Live Window
+	Begin()
+	ImageViewer(hunter.GetCurrentFrame())
+	End()
+
+
+	// RENDERING
+
+	}
+
+}
