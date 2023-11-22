@@ -73,9 +73,10 @@ class BitmapThread {
             cout << "---- BITMAP THREAD STARTED ----\n" << endl;
 
             cv::namedWindow(
-                "Bitmap visualization"
-                //TODO add flags and size
+                "Bitmap visualization",
+                cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED
             );
+            cv::resizeWindow("Bitmap visualization", 800, 800);
             cv::Mat outImg;
 
             this->frame_bitmap.toGrayscaleImage_parallel(

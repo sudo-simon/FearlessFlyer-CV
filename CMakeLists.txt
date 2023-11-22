@@ -5,7 +5,9 @@ project(FF-CV)
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 set(LIB_DIR "${SRC_DIR}/libs/")
 
-set(P2B_DIR "${LIB_DIR}/p2b/")
+
+file(GLOB P2B_SRC "${LIB_DIR}/p2b/*.cpp")
+add_library(p2b STATIC ${P2B_SRC})
 
 
 #~~~~~ JUST COMPILE THE ONES YOU NEED, NOT ALL OF THEM
@@ -35,9 +37,14 @@ add_executable(FF-CV ${SOURCE_FILES})
 include_directories(SYSTEM ${LIB_DIR})
 include_directories(${SRC_DIR})
 
+#I need these in on Ubuntu VM... why?
+include_directories(SYSTEM "/usr/local/include/opencv4/")
+include_directories(SYSTEM "${LIB_DIR}/boost_1_83_0/")
+
 
 #~~~~~ WATCH OUT FOR CORRECT NAMES OF LIBRARIES LOCATIONS
 target_link_libraries(FF-CV ${OpenCV_LIBS})
 target_link_libraries(FF-CV OpenGL::GL)
 target_link_libraries(FF-CV glfw)
 target_link_libraries(FF-CV imgui)
+target_link_libraries(FF-CV p2b)

@@ -103,11 +103,16 @@ class CaptureThread {
             std::cout << "CAP_TH: Capturing..." << std::endl;
 
             cv::VideoCapture cap = cv::VideoCapture(this->RTMP_address); 
+            //cv::VideoCapture cap = cv::VideoCapture(0);
             if (!cap.isOpened()) return;
 
             cv::Mat frame;
             int pressed_key = -1;
-            cv::namedWindow("RTMP capture");
+            cv::namedWindow(
+                "RTMP capture",
+                cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED
+            );
+            cv::resizeWindow("RTMP capture", 800, 800);
 
             FrameMessage* frame_msg = (FrameMessage*) malloc(sizeof(struct FrameMessage));
 

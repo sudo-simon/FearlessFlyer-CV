@@ -7,9 +7,9 @@
 #include "modules/Threading/Threading_demo.cpp"
 //? -------------------------------------
 //? Local libraries to be tested ----------
-#include "libs/p2b/bitmap.cpp"
-#include "libs/p2b/core.cpp"
-#include "libs/p2b/utils.cpp"
+#include "libs/p2b/bitmap.hpp"
+#include "libs/p2b/core.hpp"
+#include "libs/p2b/utils.hpp"
 //? -------------------------------------
 
 #include <iostream>
