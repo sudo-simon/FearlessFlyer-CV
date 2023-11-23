@@ -18,7 +18,7 @@
 #endif
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
-#include "Console.cpp"
+//#include "Console.hpp"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -118,15 +118,7 @@ int GUI_demo()
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     ImGuiWindowFlags window_flags = 0;
 
-    cv::Mat testImage = cv::imread( "../images/lena.png", cv::IMREAD_COLOR );
-    if( testImage.empty() ){
-        return -1;
-    }
-    cv::cvtColor(testImage, testImage, cv::COLOR_BGR2RGBA);
     cv::VideoCapture cap(0);
-
-    Console myConsole;
-
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -144,16 +136,6 @@ int GUI_demo()
         ImGui::NewFrame();
 
         //START UI
-
-        if(show_console){
-            window_flags = 0;
-            ImGui::Begin("Console", NULL, window_flags);
-            ImGui::Text("%s", myConsole.GetConsoleText().c_str());
-            if(ImGui::Button("Clear"))
-                myConsole.Clear();
-            ImGui::End();
-        }
-
         {
             ImGui::Begin("Settings");            
             ImGui::Checkbox("Console", &show_console);
@@ -162,11 +144,6 @@ int GUI_demo()
             ImGui::Checkbox("Help", &show_help_window);
 
             if (ImGui::Button("Start nginx server")){
-                if(!serverOn){   
-                    myConsole.PrintUI("Server ON");
-                } else {  
-                    myConsole.PrintUI("Server already started.");
-                }
                 serverOn = !serverOn;    
             }
 
@@ -182,10 +159,8 @@ int GUI_demo()
                 if(serverOn){
                     isCapturing = true;
                     errorCapturing = false; 
-                    myConsole.PrintUI("Capturing...");
                 } else {
                     errorCapturing = true; 
-                    myConsole.PrintUI("Error: Can't start capturing, the server is off");
                 }
             }
 
@@ -200,25 +175,12 @@ int GUI_demo()
             }
 
             if(ImGui::Button("Stop nginx server")){
-                if(serverOn){ 
-                    myConsole.PrintUI("Server OFF");
-                } else {   
-                    myConsole.PrintUI("Server already stopped.");
-                }
                 isCapturing = false;
                 serverOn  = false;
             }
 
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-
-        if(show_map_viewer){
-            window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground;
-            ImGui::Begin("Map Viewer", NULL, window_flags);    
-            ImageViewer(testImage);
             ImGui::End();
         }
 

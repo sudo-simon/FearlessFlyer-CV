@@ -10,9 +10,11 @@ class Console {
 
 
     public:
-        inline void PrintUI(std::string text);
-        inline void Clear();
-        inline std::string GetConsoleText() const;
+        inline void PrintUI(std::string text){ this->storedText.append(text+"\n"); }   
+
+        inline void Clear(){ this->storedText.clear();}
+
+        inline std::string GetConsoleText() const{ return this->storedText; }
 
         static void Log(std::string message){
             std::cout << message << std::endl;

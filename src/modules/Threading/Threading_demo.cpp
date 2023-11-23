@@ -1,4 +1,4 @@
-#include "modules/network/NetConf.hpp"
+#include "modules/Network/NetConf.hpp"
 #include "libs/buffers.hpp"
 #include "libs/p2b/core.hpp"
 #include "libs/p2b/bitmap.hpp"
@@ -130,16 +130,6 @@ class BitmapThread {
 
 
 
-
-
-
-
-
-
-
-
-
-
 int Threading_demo(){
     
     // Experimental parameters
@@ -170,7 +160,8 @@ int Threading_demo(){
         initial_buffer_capacity,
         shmem_name,
         shmem_size,
-        shmem_frames
+        shmem_frames,
+        "-"
     );
 
     BitmapThread bmpThread = BitmapThread(

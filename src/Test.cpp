@@ -1,8 +1,8 @@
 //? Local modules to be tested ----------
 #include "modules/GUI/GUI_demo.cpp"
 
-#include "modules/network/Example.cpp"
-#include "modules/network/NetConf.cpp"
+#include "modules/Network/Net_demo.cpp"
+#include "modules/Network/NetConf.cpp"
 
 #include "modules/Threading/Threading_demo.cpp"
 //? -------------------------------------
@@ -62,7 +62,6 @@ int main(int argc, char** argv){
             break;
         }
     }
-
 
     //? No valid function argument
     if (function_i == -1){
