@@ -36,8 +36,11 @@
 #include <iostream>
 #include <vector>
 
+
+
+
 /*
-    FIFO buffer class
+  FIFO buffer class
 */
 template <typename T> class FIFOBuffer {
 
@@ -66,8 +69,11 @@ public:
   void pop(T *ret_pointer);
 };
 
+
+
+
 /*
-    LIFO buffer class
+  LIFO buffer class
 */
 template <typename T> class LIFOBuffer {
 
@@ -89,11 +95,14 @@ public:
   void pop(T *ret_pointer);
 };
 
-//? Start of FIFO buffer implementations
-//-------------------------------------------------------------------------
+
+
+
+
+//? Start of FIFO buffer implementations -------------------------------------------------------------------------
 
 /*
-    Empty constructor that initializes capacity to 1
+  Empty constructor that initializes capacity to 1
 */
 template <typename T> FIFOBuffer<T>::FIFOBuffer() {
   this->size = 0;
@@ -111,9 +120,7 @@ template <typename T> FIFOBuffer<T>::FIFOBuffer() {
 
 template <typename T> FIFOBuffer<T>::FIFOBuffer(long initial_capacity) {
   if (initial_capacity <= 0) {
-    std::cerr
-        << "FIFOBuffer ERROR: initial_capacity was not a positive long int"
-        << std::endl;
+    std::cerr << "FIFOBuffer ERROR: initial_capacity was not a positive long int" << std::endl;
     std::exit(1);
   }
 
@@ -135,24 +142,29 @@ template <typename T> FIFOBuffer<T>::~FIFOBuffer() {
   this->buffer.clear();
 }
 
+
+
+
+
+
 template <typename T> long FIFOBuffer<T>::getSize() { return this->size; }
 
-template <typename T> long FIFOBuffer<T>::getCapacity() {
-  return this->capacity;
-}
+template <typename T> long FIFOBuffer<T>::getCapacity() { return this->capacity; }
 
 /*
-    Function used only during debug that does not follow the FIFO principle,
-    use is deprecated
+  Function used only during debug that does not follow the FIFO principle,
+  use is deprecated
 */
-template <typename T> T FIFOBuffer<T>::at(long index) {
-  return this->buffer[index];
-}
+template <typename T> T FIFOBuffer<T>::at(long index) { return this->buffer[index]; }
+
+
+
+
+
 
 template <typename T> void FIFOBuffer<T>::push(T elem) {
 
-  if (this->size ==
-      0) { //? No elements in buffer, we can start from the beginning
+  if (this->size == 0) { //? No elements in buffer, we can start from the beginning
     this->prev_push_i = 0;
     this->push_i = 0;
     this->pop_i = 0;
@@ -167,30 +179,31 @@ template <typename T> void FIFOBuffer<T>::push(T elem) {
   }
 
 PUSH:
-  this->buffer[this->push_i] = elem; //? Core push operation on correct push_i
+  this->buffer[this->push_i] = elem;                //? Core push operation on correct push_i
   this->next_pop[this->prev_push_i] = this->push_i; //? next_pop_map updated
-  this->prev_push_i =
-      this->push_i++; //? New prev_push_i is set and push_i increased
-  this->push_i %= this->capacity; //? Avoid going out of bounds
-  this->size++;                   //? Size increase
+  this->prev_push_i = this->push_i++;               //? New prev_push_i is set and push_i increased
+  this->push_i %= this->capacity;                   //? Avoid going out of bounds
+  this->size++;                                     //? Size increase
 }
+
 
 template <typename T> void FIFOBuffer<T>::pop(T *ret_pointer) {
 
-  if (this->size == 0)
-    return; //? No elements in buffer
+  if (this->size == 0) return; //? No elements in buffer
 
-  *ret_pointer =
-      this->buffer[this->pop_i]; //? Core pop operation on correct pop_i
-  this->pop_i = this->next_pop[this->pop_i]; //? Get next pop_i
-  this->size--;                              //? Size decrease
+  *ret_pointer = this->buffer[this->pop_i];   //? Core pop operation on correct pop_i
+  this->pop_i = this->next_pop[this->pop_i];  //? Get next pop_i
+  this->size--;                               //? Size decrease
 }
 
-//? End of FIFO buffer implementations
-//-------------------------------------------------------------------------
+//? End of FIFO buffer implementations -------------------------------------------------------------------------
 
-//? Start of LIFO buffer implementations
-//-------------------------------------------------------------------------
+
+
+
+
+
+//? Start of LIFO buffer implementations -------------------------------------------------------------------------
 
 template <typename T> LIFOBuffer<T>::LIFOBuffer() {
   this->size = 0;
@@ -210,11 +223,17 @@ template <typename T> LIFOBuffer<T>::LIFOBuffer(long initial_capacity) {
 
 template <typename T> LIFOBuffer<T>::~LIFOBuffer() { this->buffer.clear(); }
 
+
+
+
+
 template <typename T> long LIFOBuffer<T>::getSize() { return this->size; }
 
-template <typename T> long LIFOBuffer<T>::getCapacity() {
-  return this->capacity;
-}
+template <typename T> long LIFOBuffer<T>::getCapacity() { return this->capacity; }
+
+
+
+
 
 template <typename T> void LIFOBuffer<T>::push(T elem) {
 
@@ -228,11 +247,9 @@ template <typename T> void LIFOBuffer<T>::push(T elem) {
 
 template <typename T> void LIFOBuffer<T>::pop(T *ret_pointer) {
 
-  if (this->size == 0)
-    return;
+  if (this->size == 0) return;
 
   *ret_pointer = this->buffer[--this->size]; //? Core pop operation
 }
 
-//? End of LIFO buffer implementations
-//-------------------------------------------------------------------------
+//? End of LIFO buffer implementations -------------------------------------------------------------------------

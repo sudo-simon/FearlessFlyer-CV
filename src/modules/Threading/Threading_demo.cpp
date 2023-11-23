@@ -21,6 +21,14 @@ using namespace boost::interprocess;
 
 //? Multithread experiment with FIFOBuffer
 
+bool isShmemEmpty(cv::Mat* ptr, const long shmem_size){
+    char* tmp_cast = (char*) ptr;
+    for (long i=0; i<shmem_size; ++i){
+        if (*tmp_cast++ != 0) return false;
+    }
+    return true;
+}
+
 
 //? Test thread class to experiment with a bitmap
 class BitmapThread {
@@ -33,7 +41,7 @@ class BitmapThread {
         int shmem_frames;
         shared_memory_object shmem;
         mapped_region mem_region;
-        FrameMessage* shmem_ptr;
+        cv::Mat* shmem_ptr;
 
     public:
 
@@ -58,7 +66,7 @@ class BitmapThread {
                 read_write
             );
             this->mem_region = mapped_region(this->shmem, read_write);
-            this->shmem_ptr = (FrameMessage*) mem_region.get_address();
+            this->shmem_ptr = (cv::Mat*) mem_region.get_address();
 
         }
         
@@ -70,7 +78,7 @@ class BitmapThread {
         // Thread start method
         void start(){
 
-            cout << "---- BITMAP THREAD STARTED ----\n" << endl;
+            cout << "---- BITMAP THREAD STARTED ----" << endl;
 
             cv::namedWindow(
                 "Bitmap visualization",
@@ -83,29 +91,28 @@ class BitmapThread {
                 &outImg, 
                 {85,170,255}
             );
-            cout << "BMP_TH: Bitmap object created\n" << endl;
+            cout << "BMP_TH: Bitmap object created" << endl;
 
             // Main loop        
             while(1){
 
                 cv::imshow("Bitmap visualization", outImg);
-                //if (cv::pollKey() == palle) break;
                 
                 if (!isShmemEmpty(this->shmem_ptr, this->shmem_size)){
 
-                    cout << "BMP_TH: SHMEM FULL! ADDING FRAMES\n" << endl;
+                    cout << "BMP_TH: SHMEM FULL! ADDING FRAMES" << endl;
 
                     for(int i=0; i<this->shmem_frames; ++i){
                         this->frame_bitmap.addImage(
-                            &this->shmem_ptr[i].frame, 
-                            this->shmem_ptr[i].add_direction, 
+                            &this->shmem_ptr[i], 
+                            p2b::DIR_RIGHT, 
                             true
                         );
                     }
 
                     this->frame_bitmap.toGrayscaleImage_parallel(
                         &outImg, 
-                        {85,175,255}
+                        {85,170,255}
                     );
 
                     // Emptying shmem
@@ -115,6 +122,7 @@ class BitmapThread {
             }
 
             cv::destroyAllWindows();
+            cout << "BMP_TH: Stopped" << endl;
 
         }
 
@@ -135,10 +143,10 @@ class BitmapThread {
 int Threading_demo(){
     
     // Experimental parameters
-    const long initial_buffer_capacity = 32;
+    const long initial_buffer_capacity = 16;
     const char* shmem_name = "frame_shmem";
-    const long shmem_size = 100'000;
-    const int shmem_frames = 5;
+    const long shmem_size = 10'000'000;
+    const int shmem_frames = 3;
 
     //! SHMEM REMOVER, REALLY IMPORTANT
     struct shm_remove

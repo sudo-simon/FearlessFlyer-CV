@@ -11,40 +11,42 @@
 
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <sys/types.h>
+#include <vector>
 
 using namespace std;
 using namespace boost::interprocess;
 
 
 // Struct used to pass the frame to the BitmapThread class
-typedef struct FrameMessage{
-    cv::Mat frame;
-    int add_direction;
-} FrameMessage;
+class FrameMessage{
+    public:
+        cv::Mat frame;
+        int add_direction;
+        FrameMessage(){}
+        FrameMessage(cv::Mat frame, int add_direction){
+            this->frame = frame;
+            this->add_direction = add_direction;
+        }
+};
 
 
-
-bool isShmemEmpty(FrameMessage* ptr, const long shmem_size){
-    char* tmp_cast = (char*) ptr;
-    for (long i=0; i<shmem_size; ++i){
-        if (*tmp_cast++ != 0) return false;
-    }
-    return true;
-}
+//? AUX function to check if all shmem is set to 0
+bool isShmemEmpty(cv::Mat* ptr, const long shmem_size);
 
 
 class CaptureThread {
 
     private:
         string RTMP_address;
-        FIFOBuffer<FrameMessage> frame_buffer;
+        //FIFOBuffer<cv::Mat> frame_buffer;
 
         const char* shmem_name;
         long shmem_size;
         int shmem_frames;
         shared_memory_object shmem;
         mapped_region mem_region;
-        FrameMessage* shmem_ptr;
+        cv::Mat* shmem_ptr;
 
     public:
         
@@ -61,7 +63,8 @@ class CaptureThread {
             }
 
             //this->RTMP_address = "NULL";
-            this->frame_buffer = FIFOBuffer<FrameMessage>(initial_buffer_capacity);
+            //this->frame_buffer = FIFOBuffer<cv::Mat>(initial_buffer_capacity);
+
             
             this->shmem_name = shmem_name;
             this->shmem_size = shmem_size;
@@ -72,7 +75,7 @@ class CaptureThread {
                 read_write
             );
             this->mem_region = mapped_region(this->shmem, read_write);
-            this->shmem_ptr = (FrameMessage*) this->mem_region.get_address();
+            this->shmem_ptr = (cv::Mat*) this->mem_region.get_address();
 
         }
         
@@ -85,7 +88,14 @@ class CaptureThread {
 
         // Thread start method
         void start(){
-            cout << "---- CAPTURE THREAD STARTED ----\n" << endl;
+
+            //? Why do these change depending on the application?
+            //const int KEY_UP = 65362;
+            //const int KEY_RIGHT = 65363;
+            //const int KEY_DOWN = 65364;
+            //const int KEY_LEFT = 65361;
+
+            cout << "---- CAPTURE THREAD STARTED ----" << endl;
 
             // Network module init
             NetConf network;
@@ -102,8 +112,8 @@ class CaptureThread {
             std::cin.ignore();
             std::cout << "CAP_TH: Capturing..." << std::endl;
 
-            cv::VideoCapture cap = cv::VideoCapture(this->RTMP_address); 
-            //cv::VideoCapture cap = cv::VideoCapture(0);
+            //cv::VideoCapture cap = cv::VideoCapture(this->RTMP_address); 
+            cv::VideoCapture cap = cv::VideoCapture(0);
             if (!cap.isOpened()) return;
 
             cv::Mat frame;
@@ -114,7 +124,7 @@ class CaptureThread {
             );
             cv::resizeWindow("RTMP capture", 800, 800);
 
-            FrameMessage* frame_msg = (FrameMessage*) malloc(sizeof(struct FrameMessage));
+            FIFOBuffer<cv::Mat> frame_buffer(16);
 
             // Main loop
             while(1){
@@ -130,32 +140,35 @@ class CaptureThread {
                     case -1:
                         break;
                     
-                    case 82:    //? UP
-                        frame_msg->frame = frame;
-                        frame_msg->add_direction = p2b::DIR_UP;
-                        frame_buffer.push(*frame_msg);
+                    /*
+                    case KEY_UP:    //? UP
+                        fMsg = FrameMessage(frame, p2b::DIR_UP);
+                        this->frame_buffer.push(fMsg);
                         break;
                     
-                    case 83:    //? RIGHT
-                        frame_msg->frame = frame;
-                        frame_msg->add_direction = p2b::DIR_RIGHT;
-                        frame_buffer.push(*frame_msg);
+                    case KEY_RIGHT:    //? RIGHT
+                        fMsg = FrameMessage(frame, p2b::DIR_RIGHT);
+                        this->frame_buffer.push(fMsg);
                         break;
                     
-                    case 84:    //? DOWN
-                        frame_msg->frame = frame;
-                        frame_msg->add_direction = p2b::DIR_DOWN;
-                        frame_buffer.push(*frame_msg);
+                    case KEY_DOWN:    //? DOWN
+                        fMsg = FrameMessage(frame, p2b::DIR_DOWN);
+                        this->frame_buffer.push(fMsg);
                         break;
                     
-                    case 81:    //? LEFT
-                        frame_msg->frame = frame;
-                        frame_msg->add_direction = p2b::DIR_LEFT;
-                        frame_buffer.push(*frame_msg);
+                    case KEY_LEFT:    //? LEFT
+                        fMsg = FrameMessage(frame, p2b::DIR_LEFT);
+                        this->frame_buffer.push(fMsg);
+                        break;
+                    */
+
+                    case 'q':
+                        goto END;
                         break;
                     
                     default:
-                        cout << "CAP_TH: Pressed key = " << pressed_key << endl;
+                        frame_buffer.push(frame);
+                        cout << "CAP_TH: Frame buffer size = " << frame_buffer.getSize() << endl;
                         break;
                 }
 
@@ -163,19 +176,20 @@ class CaptureThread {
 
                 if (
                     isShmemEmpty(this->shmem_ptr, this->shmem_size) && 
-                    this->frame_buffer.getSize() >= this->shmem_frames
+                    frame_buffer.getSize() >= this->shmem_frames
                 ){
                     for (int i=0; i<this->shmem_frames; ++i){
-                        this->frame_buffer.pop(&this->shmem_ptr[i]);
+                        frame_buffer.pop(&this->shmem_ptr[i]);
                     }
                 }
             
             }
 
-            free(frame_msg);
+            END:
             cv::destroyAllWindows();
             cap.release();
             network.ServerStop();
+            cout << "CAP_TH: Stopped" << endl;
         }
 
 
