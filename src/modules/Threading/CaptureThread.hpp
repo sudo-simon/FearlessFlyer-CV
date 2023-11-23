@@ -105,22 +105,24 @@ class CaptureThread {
             //const int KEY_DOWN = 65364;
             //const int KEY_LEFT = 65361;
 
-            
-            Console::Log("---- CAPTURE THREAD STARTED ----");
-
             cv::VideoCapture cap = cv::VideoCapture(this->RTMP_address); 
             //cv::VideoCapture cap = cv::VideoCapture(0);
-            if (!cap.isOpened()) return;
+            if (!cap.isOpened()) {
+                Console::Log("VideoCapture() error in CaptureThread instance.");
+                return;
+            }
+            Console::Log("---- CAPTURE THREAD STARTED ----");
 
             // int pressed_key = -1;
 
-            FIFOBuffer<cv::Mat> frame_buffer(16);
+            //FIFOBuffer<cv::Mat> frame_buffer(16);
 
             // Main loop
             while(1){
                 cap >> this->currentFrame; 
                 if (currentFrame.empty()) break; 
 
+                cv::imshow("test", currentFrame);
                 // pressed_key = cv::pollKey();
 
                 // switch (pressed_key) {

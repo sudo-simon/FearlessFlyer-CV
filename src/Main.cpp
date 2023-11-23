@@ -9,6 +9,7 @@
 #include "modules/Console/Console.hpp"
 #include "modules/Network/NetConf.hpp"
 #include "modules/Threading/CaptureThread.hpp"
+#include <thread>
 
 
 static void glfw_error_callback(int error, const char* description)
@@ -99,6 +100,7 @@ int main() {
     network.BindRtmpLink("test");
 
     CaptureThread capturer(network.GetInternalRtmpLink());
+    std::thread capturerThread;
 
     Console myConsole;
     // START
@@ -155,7 +157,7 @@ int main() {
                     isCapturing = true;
                     errorCapturing = false; 
 
-                    capturer.start();
+                    capturerThread = std::thread(&CaptureThread::start, &capturer);
 
                     myConsole.PrintUI("Capturing...");
                     Console::Log("Capturing...");
@@ -209,7 +211,7 @@ int main() {
         if(show_capture_viewer && isCapturing){
             cv::Mat& frame = capturer.GetCurrentFrame();
             if(frame.empty()) continue;
-            
+
             cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
             window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
             ImGui::Begin("Live Capture", NULL, window_flags);    
