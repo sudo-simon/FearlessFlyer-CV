@@ -111,7 +111,6 @@ class CaptureThread {
                 Console::Log("VideoCapture() error in CaptureThread instance.");
                 return;
             }
-            Console::Log("---- CAPTURE THREAD STARTED ----");
 
             // int pressed_key = -1;
 
@@ -122,7 +121,6 @@ class CaptureThread {
                 cap >> this->currentFrame; 
                 if (currentFrame.empty()) break; 
 
-                cv::imshow("test", currentFrame);
                 // pressed_key = cv::pollKey();
 
                 // switch (pressed_key) {
