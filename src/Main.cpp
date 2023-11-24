@@ -10,8 +10,7 @@
 
 #include "modules/Console/Console.hpp"
 #include "modules/Network/NetConf.hpp"
-#include "modules/BlockingQueue.hpp"
-#include "modules/Threading/CaptureThread.hpp"
+#include "modules/Threading/CaptureThread.cpp"
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -97,7 +96,7 @@ int main() {
     network.RTMPconfig();
     network.BindRtmpLink();
 
-    CaptureThread capturer(network.GetExternalRtmpLink());
+    CaptureThread capturer;
     std::thread capturerThread;
 
     Console myConsole;
@@ -162,7 +161,7 @@ int main() {
                     if(!cap.isOpened()){
                         Console::LogError("VideoCapture() failed");
                     }
-                    capturerThread = std::thread(&CaptureThread::start, &capturer);
+                    capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
 
                     myConsole.PrintUI("Capturing...");
                     Console::Log("Capturing...");

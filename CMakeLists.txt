@@ -31,7 +31,16 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
-file(GLOB SOURCE_FILES "${SRC_DIR}/Main.cpp" "${MOD_DIR}/*/*.cpp")
+file(GLOB SOURCE_FILES 
+    "${SRC_DIR}/Main.cpp"
+    "${MOD_DIR}/GUI/*.cpp"
+    "${MOD_DIR}/Network/*.cpp"
+    "${MOD_DIR}/Console/*.cpp"
+    #"${MOD_DIR}/Threading/CaptureThread.cpp"
+    "${MOD_DIR}/Threading/PathfinderThread.cpp"
+    "${MOD_DIR}/Threading/RecognizerThread.cpp"
+    "${MOD_DIR}/Threading/StitcherThread.cpp"
+)
 add_executable(FF-CV ${SOURCE_FILES})
 
 
@@ -52,7 +61,7 @@ target_link_libraries(FF-CV p2b)
 
 
 #~~~~~ Test binary
-add_executable(Test "${SRC_DIR}/Test.cpp")
+add_executable(Test "${SRC_DIR}/Test.cpp" "${MOD_DIR}/Threading/CaptureThread.cpp")
 target_link_libraries(Test ${OpenCV_LIBS})
 target_link_libraries(Test OpenGL::GL)
 target_link_libraries(Test glfw)

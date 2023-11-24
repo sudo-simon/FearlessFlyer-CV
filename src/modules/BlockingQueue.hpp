@@ -45,4 +45,3 @@ class BlockingQueue
             condNotFull.notify_one();
         }
 };
-BlockingQueue<cv::Mat> synch_queue;
