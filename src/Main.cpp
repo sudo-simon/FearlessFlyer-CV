@@ -95,9 +95,9 @@ int main() {
     network.BindIp();
     network.SearchBindPort();
     network.RTMPconfig();
-    network.BindRtmpLink("test");
+    network.BindRtmpLink();
 
-    CaptureThread capturer(network.GetInternalRtmpLink());
+    CaptureThread capturer(network.GetExternalRtmpLink());
     std::thread capturerThread;
 
     Console myConsole;
