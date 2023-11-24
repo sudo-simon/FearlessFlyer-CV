@@ -1,7 +1,6 @@
 #pragma once
 
 #include "libs/buffers.hpp"
-#include "modules/Network/NetConf.hpp"
 #include "modules/Console/Console.hpp"
 
 #include <boost/interprocess/creation_tags.hpp>
@@ -14,6 +13,7 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <sys/types.h>
 #include <vector>
+#include "modules/BlockingQueue.hpp"
 
 using namespace std;
 using namespace boost::interprocess;
@@ -39,9 +39,8 @@ bool isShmemEmpty(cv::Mat* ptr, const long shmem_size);
 class CaptureThread {
 
     private:
-        string RTMP_address;
-        cv::Mat currentFrame;
         //FIFOBuffer<cv::Mat> frame_buffer;
+        string rtmpLink;
 
         // Shared Memory options
         const char* shmem_name;
@@ -53,8 +52,8 @@ class CaptureThread {
 
     public:
 
-        CaptureThread(const string rtmpLink){
-            this->RTMP_address = rtmpLink;
+        CaptureThread(std::string link){
+            this->rtmpLink = link;
         }
         
         // Constructor
@@ -62,15 +61,13 @@ class CaptureThread {
             const long initial_buffer_capacity, 
             const char* shmem_name, 
             const long shmem_size,
-            const int shmem_frames,
-            const string rtmpLink
+            const int shmem_frames
         ){
             if (initial_buffer_capacity <= 0 || shmem_size <= 0){
                 cerr << "CAP_TH: Unable to create CaptureThread object" << endl;
                 exit(1);
             }
 
-            this->RTMP_address = rtmpLink;
             //this->frame_buffer = FIFOBuffer<cv::Mat>(initial_buffer_capacity);
 
             //Shared Memory
@@ -92,93 +89,37 @@ class CaptureThread {
             shared_memory_object::remove(this->shmem_name);
         }
 
-        cv::Mat& GetCurrentFrame(){
-            return this->currentFrame;
-        }
-
         // Thread start method
         void start(){
 
             //? Why do these change depending on the application?
-            //const int KEY_UP = 65362;
-            //const int KEY_RIGHT = 65363;
-            //const int KEY_DOWN = 65364;
-            //const int KEY_LEFT = 65361;
+            // const int KEY_UP = 65362;
+            // const int KEY_RIGHT = 65363;
+            // const int KEY_DOWN = 65364;
+            // const int KEY_LEFT = 65361;
 
-            cv::VideoCapture cap = cv::VideoCapture(this->RTMP_address); 
-            //cv::VideoCapture cap = cv::VideoCapture(0);
-            if (!cap.isOpened()) {
-                Console::Log("VideoCapture() error in CaptureThread instance.");
-                return;
-            }
 
             // int pressed_key = -1;
 
             //FIFOBuffer<cv::Mat> frame_buffer(16);
 
+            cv::Mat frame;
+            int frame_count = 0;
+            Console::Log("Inizio");
+
             // Main loop
             while(1){
-                cap >> this->currentFrame; 
-                if (currentFrame.empty()) break; 
+                synch_queue.take(frame);
+                if (frame.empty()) continue; 
 
-                // pressed_key = cv::pollKey();
-
-                // switch (pressed_key) {
-
-                //     case -1:
-                //         break;
-                    
-                //     /*
-                //     case KEY_UP:    //? UP
-                //         fMsg = FrameMessage(frame, p2b::DIR_UP);
-                //         this->frame_buffer.push(fMsg);
-                //         break;
-                    
-                //     case KEY_RIGHT:    //? RIGHT
-                //         fMsg = FrameMessage(frame, p2b::DIR_RIGHT);
-                //         this->frame_buffer.push(fMsg);
-                //         break;
-                    
-                //     case KEY_DOWN:    //? DOWN
-                //         fMsg = FrameMessage(frame, p2b::DIR_DOWN);
-                //         this->frame_buffer.push(fMsg);
-                //         break;
-                    
-                //     case KEY_LEFT:    //? LEFT
-                //         fMsg = FrameMessage(frame, p2b::DIR_LEFT);
-                //         this->frame_buffer.push(fMsg);
-                //         break;
-                //     */
-
-                //     case 'q':
-                //         goto END;
-                //         break;
-                    
-                //     default:
-                //         frame_buffer.push(frame);
-                //         cout << "CAP_TH: Frame buffer size = " << frame_buffer.getSize() << endl;
-                //         break;
-                // }
-
-                // pressed_key = -1;
-
-                // if (
-                //     isShmemEmpty(this->shmem_ptr, this->shmem_size) && 
-                //     frame_buffer.getSize() >= this->shmem_frames
-                // ){
-                //     for (int i=0; i<this->shmem_frames; ++i){
-                //         frame_buffer.pop(&this->shmem_ptr[i]);
-                //     }
-                // }
-            
+                if(frame_count < 60){
+                    frame_count++;
+                } else {
+                    Console::Log("Frame selected");
+                    cv::imwrite("palle.png", frame);
+                    frame_count = 0;
+                }
             }
-
-            // END:
-            // cv::destroyAllWindows();
-            // cap.release();
-            // network.ServerStop();
-            // cout << "CAP_TH: Stopped" << endl;
         }
-
 
 };

@@ -37,8 +37,8 @@ int main(int argc, char** argv){
     //? Function pointers to be called via passed arguments, update when needed
     vector<int(*)()> function_pointers = {
         GUI_demo, 
-        Network_demo,
-        Threading_demo
+        Network_demo
+        //Threading_demo
     };
 
     int function_i = -1;

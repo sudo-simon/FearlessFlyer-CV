@@ -1,16 +1,17 @@
+#include <stdio.h>
+#include <thread>
+#include <opencv2/opencv.hpp>
+#define GL_SILENCE_DEPRECATION
+#include <GLFW/glfw3.h>
+
 #include "libs/imgui/imgui.h"
 #include "libs/imgui/backends/imgui_impl_glfw.h"
 #include "libs/imgui/backends/imgui_impl_opengl3.h"
-#include <stdio.h>
-#include <opencv2/opencv.hpp>
-#define GL_SILENCE_DEPRECATION
-#include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
 #include "modules/Console/Console.hpp"
 #include "modules/Network/NetConf.hpp"
+#include "modules/BlockingQueue.hpp"
 #include "modules/Threading/CaptureThread.hpp"
-#include <thread>
-
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -28,7 +29,6 @@ static void ImageViewer(cv::Mat& image){
     ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture ) ), ImVec2( image.cols, image.rows ) );
 }
 
-
 int main() {
 
     glfwSetErrorCallback(glfw_error_callback);
@@ -40,7 +40,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     // Window and Graphics Context
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "RTMP", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(540, 360, "RTMP", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -91,8 +91,6 @@ int main() {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     ImGuiWindowFlags window_flags = 0;
 
-    cv::VideoCapture cap(0);
-
     NetConf network;
     network.BindIp();
     network.SearchBindPort();
@@ -104,6 +102,9 @@ int main() {
 
     Console myConsole;
     // START
+
+    cv::VideoCapture cap;
+    cv::Mat frame;
 
     // UPDATE
     while (!glfwWindowShouldClose(window))
@@ -157,6 +158,10 @@ int main() {
                     isCapturing = true;
                     errorCapturing = false; 
 
+                    cap = cv::VideoCapture(network.GetInternalRtmpLink());
+                    if(!cap.isOpened()){
+                        Console::LogError("VideoCapture() failed");
+                    }
                     capturerThread = std::thread(&CaptureThread::start, &capturer);
 
                     myConsole.PrintUI("Capturing...");
@@ -174,8 +179,15 @@ int main() {
             }
 
             if(isCapturing && serverOn){
-                ImGui::SameLine();                            
-                ImGui::Text("Capturing frames.");
+                cap >> frame;
+                if(!frame.empty()){
+                    cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+
+                    synch_queue.put(frame);
+
+                    ImGui::SameLine();                            
+                    ImGui::Text("Capturing frames.");
+                }
             }
 
             if(errorCapturing){
@@ -209,10 +221,6 @@ int main() {
         // }
 
         if(show_capture_viewer && isCapturing){
-            cv::Mat& frame = capturer.GetCurrentFrame();
-            if(frame.empty()) continue;
-
-            cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
             window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
             ImGui::Begin("Live Capture", NULL, window_flags);    
             ImageViewer(frame);
