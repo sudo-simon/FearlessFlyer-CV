@@ -25,7 +25,7 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 // ----------------------------------------------------------------
 
 
-CaptureThread::CaptureThread(BlockingQueue<cv::Mat>& shared_queue){
+CaptureThread::CaptureThread(BlockingQueue<cv::Mat>* shared_queue){
     this->synch_queue = shared_queue;
 }
 
@@ -258,7 +258,7 @@ void CaptureThread::start_v2(){
 
     // Main loop
     while(1){
-        synch_queue.take(frame);
+        (*synch_queue).take(frame);
         if (frame.empty()) continue; 
 
         if(frame_count < 60){

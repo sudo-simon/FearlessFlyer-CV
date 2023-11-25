@@ -1,3 +1,5 @@
+#include "modules/BlockingQueue.hpp"
+#include <opencv2/core/mat.hpp>
 #include <stdio.h>
 #include <thread>
 #include <opencv2/opencv.hpp>
@@ -96,7 +98,9 @@ int main() {
     network.RTMPconfig();
     network.BindRtmpLink();
 
-    CaptureThread capturer;
+    BlockingQueue<cv::Mat> synch_queue;
+
+    CaptureThread capturer(&synch_queue);
     std::thread capturerThread;
 
     Console myConsole;
@@ -104,8 +108,6 @@ int main() {
 
     cv::VideoCapture cap;
     cv::Mat frame;
-
-    BlockingQueue* BlockingQueue::instance = nullptr;
 
     // UPDATE
     while (!glfwWindowShouldClose(window))
