@@ -36,7 +36,7 @@ file(GLOB SOURCE_FILES
     "${MOD_DIR}/GUI/*.cpp"
     "${MOD_DIR}/Network/*.cpp"
     "${MOD_DIR}/Console/*.cpp"
-    #"${MOD_DIR}/Threading/CaptureThread.cpp"
+    "${MOD_DIR}/Threading/CaptureThread.cpp" #commentabile
     "${MOD_DIR}/Threading/PathfinderThread.cpp"
     "${MOD_DIR}/Threading/RecognizerThread.cpp"
     "${MOD_DIR}/Threading/StitcherThread.cpp"

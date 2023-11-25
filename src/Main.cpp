@@ -10,7 +10,7 @@
 
 #include "modules/Console/Console.hpp"
 #include "modules/Network/NetConf.hpp"
-#include "modules/Threading/CaptureThread.cpp"
+#include "modules/Threading/CaptureThread.hpp"
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -104,6 +104,8 @@ int main() {
 
     cv::VideoCapture cap;
     cv::Mat frame;
+
+    BlockingQueue* BlockingQueue::instance = nullptr;
 
     // UPDATE
     while (!glfwWindowShouldClose(window))

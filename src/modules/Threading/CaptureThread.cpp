@@ -25,7 +25,9 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 // ----------------------------------------------------------------
 
 
-CaptureThread::CaptureThread(){}
+CaptureThread::CaptureThread(BlockingQueue<cv::Mat>& shared_queue){
+    this->synch_queue = shared_queue;
+}
 
 
 CaptureThread::CaptureThread(

@@ -19,7 +19,6 @@ class BlockingQueue
     public:
 
         void put(T new_value) {
-      
             std::unique_lock<std::mutex> lk(mut);
             //Condition takes a unique_lock and waits given the false condition
             condNotFull.wait(lk,[this]{

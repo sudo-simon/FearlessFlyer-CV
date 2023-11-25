@@ -18,10 +18,6 @@
 #include <sys/types.h>
 
 
-
-BlockingQueue<cv::Mat> synch_queue;
-
-
 using namespace std;
 using namespace boost::interprocess;
 
@@ -59,6 +55,7 @@ class CaptureThread {
 
     private:
         string RTMP_address;
+        BlockingQueue<cv::Mat>& synch_queue;
         FIFOBuffer<cv::Mat> frame_buffer;
         FIFOBuffer<struct ShmemFrameMessage> msg_buffer;
 
@@ -74,7 +71,7 @@ class CaptureThread {
 
     public:
         
-        CaptureThread();
+        CaptureThread(BlockingQueue<cv::Mat>& shared_queue);
 
         /*
             Constructor
