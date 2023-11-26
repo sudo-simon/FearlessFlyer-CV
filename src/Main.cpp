@@ -100,7 +100,7 @@ int main() {
 
     BlockingQueue<cv::Mat> synch_queue;
 
-    CaptureThread capturer(&synch_queue);
+    CaptureThread capturer(&synch_queue, network.GetExternalRtmpLink());
     std::thread capturerThread;
 
     Console myConsole;
@@ -161,10 +161,6 @@ int main() {
                     isCapturing = true;
                     errorCapturing = false; 
 
-                    cap = cv::VideoCapture(network.GetInternalRtmpLink());
-                    if(!cap.isOpened()){
-                        Console::LogError("VideoCapture() failed");
-                    }
                     capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
 
                     myConsole.PrintUI("Capturing...");
@@ -182,15 +178,10 @@ int main() {
             }
 
             if(isCapturing && serverOn){
-                cap >> frame;
-                if(!frame.empty()){
-                    cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+                synch_queue.take(frame);
 
-                    synch_queue.put(frame);
-
-                    ImGui::SameLine();                            
-                    ImGui::Text("Capturing frames.");
-                }
+                ImGui::SameLine();                            
+                ImGui::Text("Capturing frames.");
             }
 
             if(errorCapturing){

@@ -25,8 +25,9 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 // ----------------------------------------------------------------
 
 
-CaptureThread::CaptureThread(BlockingQueue<cv::Mat>* shared_queue){
+CaptureThread::CaptureThread(BlockingQueue<cv::Mat>* shared_queue, std::string link){
     this->synch_queue = shared_queue;
+    this->RTMP_address = link;
 }
 
 
@@ -256,9 +257,16 @@ void CaptureThread::start_v2(){
     cv::Mat frame;
     int frame_count = 0;
 
+    cv::VideoCapture cap(RTMP_address);
+    if(!cap.isOpened()){
+        Console::LogError("VideoCapture() failed");
+    }
+
     // Main loop
     while(1){
-        (*synch_queue).take(frame);
+        cap >> frame;
+        cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+        (*synch_queue).put(frame);
         if (frame.empty()) continue; 
 
         if(frame_count < 60){

@@ -71,7 +71,7 @@ class CaptureThread {
 
     public:
         
-        CaptureThread(BlockingQueue<cv::Mat>* shared_queue);
+        CaptureThread(BlockingQueue<cv::Mat>* shared_queue, string link);
 
         /*
             Constructor
