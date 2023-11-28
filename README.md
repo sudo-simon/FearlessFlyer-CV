@@ -25,8 +25,7 @@ sudo apt install libnginx-mod-rtmp
 
 ### GLFW and OPENGL
 ```console
-sudo apt install libglfw3 libglfw3-dev xorg-dev
-sudo apt install freeglut3-dev
+sudo apt install libglfw3 libglfw3-dev xorg-dev freeglut3-dev
 ```
 
 ### Boost

@@ -496,6 +496,11 @@ int p2b::Bitmap::addImage(cv::Mat* img_ptr, const int add_direction, bool minima
         return 1;
     }
 
+    //? addImage is being used to add the first image
+    if (this->last_add_r0 == -1){
+        return this->fromImage_parallel(img_ptr);
+    }
+
     long img_rows = img_ptr->rows;
     long img_cols = (img_ptr->cols + this->pixels_per_byte - 1)/this->pixels_per_byte;
 
