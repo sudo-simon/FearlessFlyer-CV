@@ -76,7 +76,7 @@ class CaptureThread {
         
         CaptureThread(BlockingQueue<cv::Mat>* shared_queue, string link);
 
-        CaptureThread(FIFOBuffer<cv::Mat>* fifo_buffer_ptr);
+        CaptureThread(FIFOBuffer<cv::Mat>* fifo_buffer_ptr, std::string rtmp_addr);
 
         /*
             Constructor

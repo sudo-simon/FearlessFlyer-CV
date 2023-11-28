@@ -32,8 +32,9 @@ CaptureThread::CaptureThread(BlockingQueue<cv::Mat>* shared_queue, std::string l
     this->RTMP_address = link;
 }
 
-CaptureThread::CaptureThread(FIFOBuffer<cv::Mat>* fifo_buffer_ptr){
+CaptureThread::CaptureThread(FIFOBuffer<cv::Mat>* fifo_buffer_ptr, std::string rtmp_addr){
     this->fifo_buffer_ptr = fifo_buffer_ptr;
+    this->RTMP_address = rtmp_addr;
 }
 
 
@@ -294,7 +295,8 @@ void CaptureThread::start_v3(){
     cout << "---- CAPTURE THREAD STARTED ----" << endl;
 
     cv::Mat frame;
-    cv::VideoCapture cap(0);
+    //!cv::VideoCapture cap(0);
+    cv::VideoCapture cap(this->RTMP_address);
     if(!cap.isOpened()){
         Console::LogError("VideoCapture() failed");
     }
@@ -302,7 +304,7 @@ void CaptureThread::start_v3(){
     while(1){
         cap >> frame;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-        //this->synch_queue->put(frame);
+        //!this->synch_queue->put(frame);
         this->fifo_buffer_ptr->push(frame);
     }
 

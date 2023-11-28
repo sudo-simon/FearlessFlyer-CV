@@ -100,11 +100,11 @@ int main() {
     network.RTMPconfig();
     network.BindRtmpLink();
 
-    //BlockingQueue<cv::Mat> synch_queue;
-    //CaptureThread capturer(&synch_queue, network.GetExternalRtmpLink());
+    //!BlockingQueue<cv::Mat> synch_queue;
+    //!CaptureThread capturer(&synch_queue, network.GetExternalRtmpLink());
     
-    FIFOBuffer<cv::Mat> fifo_buffer(10);
-    CaptureThread capturer(&fifo_buffer);
+    FIFOBuffer<cv::Mat> fifo_buffer(16);
+    CaptureThread capturer(&fifo_buffer, network.GetExternalRtmpLink());
     
     std::thread capturerThread;
 
@@ -186,7 +186,7 @@ int main() {
             }
 
             if(isCapturing && serverOn){
-                //synch_queue.take(frame);
+                //!synch_queue.take(frame);
                 fifo_buffer.pop(&frame);
 
                 ImGui::SameLine();                            
