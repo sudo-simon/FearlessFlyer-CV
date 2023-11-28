@@ -1,8 +1,10 @@
 #include "modules/Threading/CaptureThread.hpp"
 #include "modules/Console/Console.hpp"
 
+#include <buffers.hpp>
 #include <cstdint>
 #include <cstring>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 
 
@@ -28,6 +30,10 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 CaptureThread::CaptureThread(BlockingQueue<cv::Mat>* shared_queue, std::string link){
     this->synch_queue = shared_queue;
     this->RTMP_address = link;
+}
+
+CaptureThread::CaptureThread(FIFOBuffer<cv::Mat>* fifo_buffer_ptr){
+    this->fifo_buffer_ptr = fifo_buffer_ptr;
 }
 
 
@@ -72,7 +78,7 @@ CaptureThread::~CaptureThread(){
 
 
 
-void CaptureThread::start(){
+void CaptureThread::start_v1(){
 
     //? Some constants definitions --------
     const int KEY_UP = 65362;
@@ -276,6 +282,28 @@ void CaptureThread::start_v2(){
             cv::imwrite("palle.png", frame);
             frame_count = 0;
         }
+    }
+
+    cout << "CAPTURE_THREAD: Stopped" << endl;
+
+}
+
+
+void CaptureThread::start_v3(){
+
+    cout << "---- CAPTURE THREAD STARTED ----" << endl;
+
+    cv::Mat frame;
+    cv::VideoCapture cap(0);
+    if(!cap.isOpened()){
+        Console::LogError("VideoCapture() failed");
+    }
+
+    while(1){
+        cap >> frame;
+        cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+        this->synch_queue->put(frame);
+        //!this->fifo_buffer_ptr->push(frame);
     }
 
     cout << "CAPTURE_THREAD: Stopped" << endl;

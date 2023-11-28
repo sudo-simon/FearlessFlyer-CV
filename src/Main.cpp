@@ -1,4 +1,5 @@
 #include "modules/BlockingQueue.hpp"
+#include <buffers.hpp>
 #include <opencv2/core/mat.hpp>
 #include <stdio.h>
 #include <thread>
@@ -99,14 +100,16 @@ int main() {
     network.BindRtmpLink();
 
     BlockingQueue<cv::Mat> synch_queue;
-
     CaptureThread capturer(&synch_queue, network.GetExternalRtmpLink());
+    
+    //!FIFOBuffer<cv::Mat> fifo_buffer(10);
+    //!CaptureThread capturer(&fifo_buffer);
+    
     std::thread capturerThread;
 
     Console myConsole;
     // START
 
-    cv::VideoCapture cap;
     cv::Mat frame;
 
     // UPDATE
@@ -161,7 +164,8 @@ int main() {
                     isCapturing = true;
                     errorCapturing = false; 
 
-                    capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
+                    //!capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
+                    capturerThread = std::thread(&CaptureThread::start_v3, &capturer);
 
                     myConsole.PrintUI("Capturing...");
                     Console::Log("Capturing...");
@@ -179,6 +183,7 @@ int main() {
 
             if(isCapturing && serverOn){
                 synch_queue.take(frame);
+                //!fifo_buffer.pop(&frame);
 
                 ImGui::SameLine();                            
                 ImGui::Text("Capturing frames.");

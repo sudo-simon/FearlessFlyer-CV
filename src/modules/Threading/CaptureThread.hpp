@@ -55,9 +55,12 @@ class CaptureThread {
 
     private:
         string RTMP_address;
-        BlockingQueue<cv::Mat>* synch_queue;
-        FIFOBuffer<cv::Mat> frame_buffer;
+        FIFOBuffer<cv::Mat> frame_buffer; 
         FIFOBuffer<struct ShmemFrameMessage> msg_buffer;
+
+        BlockingQueue<cv::Mat>* synch_queue;
+
+        FIFOBuffer<cv::Mat>* fifo_buffer_ptr;
 
         const char* shmem_name;
         size_t shmem_size;
@@ -72,6 +75,8 @@ class CaptureThread {
     public:
         
         CaptureThread(BlockingQueue<cv::Mat>* shared_queue, string link);
+
+        CaptureThread(FIFOBuffer<cv::Mat>* fifo_buffer_ptr);
 
         /*
             Constructor
@@ -93,8 +98,10 @@ class CaptureThread {
         /*
             Thread start method
         */
-        void start();
+        void start_v1();
 
         void start_v2();
+
+        void start_v3();
 
 };
