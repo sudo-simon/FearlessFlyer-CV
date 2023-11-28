@@ -42,7 +42,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     // Window and Graphics Context
-    GLFWwindow* window = glfwCreateWindow(540, 360, "RTMP", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1080, 720, "Fearless Flyer", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -90,7 +90,8 @@ int main() {
     bool serverOn = false;
     bool isCapturing = false;
     bool errorCapturing = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+   
+    ImVec4 bg_color = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
     ImGuiWindowFlags window_flags = 0;
 
     NetConf network;
@@ -99,11 +100,11 @@ int main() {
     network.RTMPconfig();
     network.BindRtmpLink();
 
-    BlockingQueue<cv::Mat> synch_queue;
-    CaptureThread capturer(&synch_queue, network.GetExternalRtmpLink());
+    //BlockingQueue<cv::Mat> synch_queue;
+    //CaptureThread capturer(&synch_queue, network.GetExternalRtmpLink());
     
-    //!FIFOBuffer<cv::Mat> fifo_buffer(10);
-    //!CaptureThread capturer(&fifo_buffer);
+    FIFOBuffer<cv::Mat> fifo_buffer(10);
+    CaptureThread capturer(&fifo_buffer);
     
     std::thread capturerThread;
 
@@ -111,6 +112,9 @@ int main() {
     // START
 
     cv::Mat frame;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
     // UPDATE
     while (!glfwWindowShouldClose(window))
@@ -182,8 +186,8 @@ int main() {
             }
 
             if(isCapturing && serverOn){
-                synch_queue.take(frame);
-                //!fifo_buffer.pop(&frame);
+                //synch_queue.take(frame);
+                fifo_buffer.pop(&frame);
 
                 ImGui::SameLine();                            
                 ImGui::Text("Capturing frames.");
@@ -226,18 +230,9 @@ int main() {
             ImGui::End();
         }
 
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
         if(show_help_window)
         {
-            static float f = 0.0f;
-            ImGui::Begin("Help");
-            ImGui::Text("From the ImGui Demo:");              
-            ImGui::Checkbox("Demo Window", &show_demo_window); 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); 
-            ImGui::End();
+            ImGui::ShowDemoWindow(&show_demo_window);
         }
         // WINDOWS
 
@@ -246,7 +241,7 @@ int main() {
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClearColor(bg_color.x * bg_color.w, bg_color.y * bg_color.w, bg_color.z * bg_color.w, bg_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

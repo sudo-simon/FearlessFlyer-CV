@@ -302,8 +302,8 @@ void CaptureThread::start_v3(){
     while(1){
         cap >> frame;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-        this->synch_queue->put(frame);
-        //!this->fifo_buffer_ptr->push(frame);
+        //this->synch_queue->put(frame);
+        this->fifo_buffer_ptr->push(frame);
     }
 
     cout << "CAPTURE_THREAD: Stopped" << endl;
