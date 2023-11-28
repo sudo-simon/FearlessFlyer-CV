@@ -26,15 +26,9 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 }
 // ----------------------------------------------------------------
 
-
-CaptureThread::CaptureThread(BlockingQueue<cv::Mat>* shared_queue, std::string link){
-    this->synch_queue = shared_queue;
-    this->RTMP_address = link;
-}
-
-CaptureThread::CaptureThread(FIFOBuffer<cv::Mat>* fifo_buffer_ptr, std::string rtmp_addr){
+CaptureThread::CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* fifo_buffer_ptr){
+    this->RTMP_address = RTMP_addr;
     this->fifo_buffer_ptr = fifo_buffer_ptr;
-    this->RTMP_address = rtmp_addr;
 }
 
 
@@ -54,7 +48,7 @@ CaptureThread::CaptureThread(
 
     this->RTMP_address = "NULL";
 
-    this->frame_buffer = FIFOBuffer<cv::Mat>(initial_buffer_capacity);
+    this->fifo_buffer_ptr = new FIFOBuffer<cv::Mat>(initial_buffer_capacity);
     this->msg_buffer = FIFOBuffer<struct ShmemFrameMessage>(initial_buffer_capacity);
     
     this->shmem_name = shmem_name;
@@ -74,7 +68,8 @@ CaptureThread::CaptureThread(
 }
 
 CaptureThread::~CaptureThread(){
-    shared_memory_object::remove(this->shmem_name);
+    //! THIS GENERATES SEGFAULT IF NOT USING THE SHMEM
+    //!shared_memory_object::remove(this->shmem_name);
 }
 
 
@@ -167,7 +162,7 @@ void CaptureThread::start_v1(){
                 cv::cvtColor(frame, gs_frame, cv::COLOR_BGR2GRAY);
 
                 shmMsg->add_direction = p2b::DIR_UP;
-                this->frame_buffer.push(gs_frame.clone());
+                this->fifo_buffer_ptr->push(gs_frame);
                 this->msg_buffer.push(*shmMsg);
 
                 break;
@@ -176,7 +171,7 @@ void CaptureThread::start_v1(){
                 cv::cvtColor(frame, gs_frame, cv::COLOR_BGR2GRAY);
 
                 shmMsg->add_direction = p2b::DIR_RIGHT;
-                this->frame_buffer.push(gs_frame.clone());
+                this->fifo_buffer_ptr->push(gs_frame);
                 this->msg_buffer.push(*shmMsg);
 
                 break;
@@ -185,7 +180,7 @@ void CaptureThread::start_v1(){
                 cv::cvtColor(frame, gs_frame, cv::COLOR_BGR2GRAY);
 
                 shmMsg->add_direction = p2b::DIR_DOWN;
-                this->frame_buffer.push(gs_frame.clone());
+                this->fifo_buffer_ptr->push(gs_frame);
                 this->msg_buffer.push(*shmMsg);
 
                 break;
@@ -194,7 +189,7 @@ void CaptureThread::start_v1(){
                 cv::cvtColor(frame, gs_frame, cv::COLOR_BGR2GRAY);
 
                 shmMsg->add_direction = p2b::DIR_LEFT;
-                this->frame_buffer.push(gs_frame.clone());
+                this->fifo_buffer_ptr->push(gs_frame);
                 this->msg_buffer.push(*shmMsg);
 
                 break;
@@ -209,12 +204,12 @@ void CaptureThread::start_v1(){
         }
 
         if (
-            this->frame_buffer.getSize() >= this->shmem_n_frames &&
+            this->fifo_buffer_ptr->getSize() >= this->shmem_n_frames &&
             isShmemEmpty(this->shmem_ptr, this->shmem_size)
         ){
 
             for (int i=0; i<this->shmem_n_frames; ++i){
-                this->frame_buffer.pop(&tmp_frame);
+                this->fifo_buffer_ptr->pop(&tmp_frame);
                 this->msg_buffer.pop(&tmp_msg);
                 std::memcpy(
                     tmp_memory+shmem_written_bytes, 
@@ -255,42 +250,7 @@ void CaptureThread::start_v1(){
 }
 
 
-
-
 void CaptureThread::start_v2(){
-
-    cout << "---- CAPTURE THREAD STARTED ----" << endl;
-
-    cv::Mat frame;
-    int frame_count = 0;
-
-    cv::VideoCapture cap(RTMP_address);
-    if(!cap.isOpened()){
-        Console::LogError("VideoCapture() failed");
-    }
-
-    // Main loop
-    while(1){
-        cap >> frame;
-        cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-        (*synch_queue).put(frame);
-        if (frame.empty()) continue; 
-
-        if(frame_count < 60){
-            frame_count++;
-        } else {
-            Console::Log("Frame selected");
-            cv::imwrite("palle.png", frame);
-            frame_count = 0;
-        }
-    }
-
-    cout << "CAPTURE_THREAD: Stopped" << endl;
-
-}
-
-
-void CaptureThread::start_v3(){
 
     cout << "---- CAPTURE THREAD STARTED ----" << endl;
 
@@ -303,11 +263,11 @@ void CaptureThread::start_v3(){
 
     while(1){
         cap >> frame;
+        if (frame.empty()) continue;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-        //!this->synch_queue->put(frame);
         this->fifo_buffer_ptr->push(frame);
     }
 
-    cout << "CAPTURE_THREAD: Stopped" << endl;
+    cout << "---- CAPTURE THREAD STOPPED ----" << endl;
 
 }

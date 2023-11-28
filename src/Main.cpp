@@ -100,23 +100,20 @@ int main() {
     network.RTMPconfig();
     network.BindRtmpLink();
 
-    //!BlockingQueue<cv::Mat> synch_queue;
-    //!CaptureThread capturer(&synch_queue, network.GetExternalRtmpLink());
-    
-    FIFOBuffer<cv::Mat> fifo_buffer(16);
-    CaptureThread capturer(&fifo_buffer, network.GetExternalRtmpLink());
-    
+    //? Capture Thread init ----------------------
+    FIFOBuffer<cv::Mat> fifo_buffer(8);
+    CaptureThread capturer(network.GetExternalRtmpLink(), &fifo_buffer);
     std::thread capturerThread;
+    cv::Mat frame;
+    //? ------------------------------------------
 
     Console myConsole;
-    // START
 
-    cv::Mat frame;
-
+    //? START  
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-    // UPDATE
+    //? UPDATE
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -167,9 +164,9 @@ int main() {
                 if(serverOn && !isCapturing){
                     isCapturing = true;
                     errorCapturing = false; 
-
-                    //!capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
-                    capturerThread = std::thread(&CaptureThread::start_v3, &capturer);
+                    
+                    //? CAPTURE THREAD START
+                    capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
 
                     myConsole.PrintUI("Capturing...");
                     Console::Log("Capturing...");
@@ -185,8 +182,8 @@ int main() {
                 }
             }
 
+            //? RENDERING OF THE FRAME TAKEN FROM THE FIFOBUFFER
             if(isCapturing && serverOn){
-                //!synch_queue.take(frame);
                 fifo_buffer.pop(&frame);
 
                 ImGui::SameLine();                            
