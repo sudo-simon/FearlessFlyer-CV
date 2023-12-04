@@ -18,6 +18,8 @@ class BlockingQueue
 
     public:
 
+        bool changed;
+
         void put(T new_value) {
             std::unique_lock<std::mutex> lk(mut);
             //Condition takes a unique_lock and waits given the false condition
@@ -29,6 +31,7 @@ class BlockingQueue
                 }
             
             });
+            changed = true;
             private_std_queue.push(new_value);
             count++;
             condNotEmpty.notify_one();
@@ -39,6 +42,7 @@ class BlockingQueue
             //Condition takes a unique_lock and waits given the false condition
             condNotEmpty.wait(lk,[this]{return !private_std_queue.empty();});
             value=private_std_queue.front();
+            changed = false;
             private_std_queue.pop();
             count--;
             condNotFull.notify_one();

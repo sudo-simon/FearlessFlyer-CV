@@ -1,4 +1,5 @@
 #include "modules/BlockingQueue.hpp"
+#include "modules/Threading/StitcherThread.hpp"
 #include <buffers.hpp>
 #include <opencv2/core/mat.hpp>
 #include <stdio.h>
@@ -102,9 +103,13 @@ int main() {
 
     //? Capture Thread init ----------------------
     FIFOBuffer<cv::Mat> fifo_buffer(8);
+    BlockingQueue<cv::Mat> mapBuffer;
     CaptureThread capturer(network.GetExternalRtmpLink(), &fifo_buffer);
+    StitcherThread stitcher(&fifo_buffer,&mapBuffer);
     std::thread capturerThread;
+    std::thread stitcherThread;
     cv::Mat frame;
+    cv::Mat map;
     //? ------------------------------------------
 
     Console myConsole;
@@ -167,6 +172,7 @@ int main() {
                     
                     //? CAPTURE THREAD START
                     capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
+                    stitcherThread = std::thread(&StitcherThread::Start, &stitcher);
 
                     myConsole.PrintUI("Capturing...");
                     Console::Log("Capturing...");
@@ -213,12 +219,15 @@ int main() {
             ImGui::End();
         }
 
-        // if(show_map_viewer){
-        //     window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground;
-        //     ImGui::Begin("Map Viewer", NULL, window_flags);    
-        //     ImageViewer(testImage);
-        //     ImGui::End();
-        // }
+        if(show_map_viewer){
+            if(mapBuffer.changed){
+                mapBuffer.take(map);
+            }
+            window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground;
+            ImGui::Begin("Map Viewer", NULL, window_flags);    
+            ImageViewer(map);
+            ImGui::End();
+        }
 
         if(show_capture_viewer && isCapturing){
             window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
