@@ -6,7 +6,7 @@
 class StitcherThread {
 
     private:
-        FIFOBuffer<cv::Mat>* fifo_buffer_ptr;
+        FIFOBuffer<cv::Mat>* fromCap_buffer_ptr;
         BlockingQueue<cv::Mat>* mapBuffer_ptr;
         cv::Mat map;
 
@@ -15,9 +15,9 @@ class StitcherThread {
         inline void MapBufferUpdate();
 
     public:
-        StitcherThread(FIFOBuffer<cv::Mat>* fifo__ptr,BlockingQueue<cv::Mat>* buffer_ptr) : fifo_buffer_ptr(fifo__ptr), mapBuffer_ptr(buffer_ptr){};
+        StitcherThread(FIFOBuffer<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr) : fromCap_buffer_ptr(fifo_ptr), mapBuffer_ptr(buffer_ptr){};
 
-        ~StitcherThread();
+        ~StitcherThread() {}
 
         void Start();
 

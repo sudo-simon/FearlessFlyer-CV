@@ -6,10 +6,12 @@
 void StitcherThread::Start(){
 
     cv::Mat frame;
-    (*this->fifo_buffer_ptr).pop(&frame);
+    while(1){
+        this->fromCap_buffer_ptr->pop(&frame);
 
-    StitchingRoutine(frame);
-    MapBufferUpdate();
+        StitchingRoutine(frame);
+        MapBufferUpdate();
+    }
 }
 
 
@@ -20,9 +22,10 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     //Features movement extimation (RANSAC)
 
     // apply the image on the map
+    this->map = newFrame;
 }
 
 
 inline void StitcherThread::MapBufferUpdate(){
-    (*this->mapBuffer_ptr).put(this->map);
+    this->mapBuffer_ptr->put(this->map);
 }

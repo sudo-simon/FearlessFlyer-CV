@@ -55,7 +55,9 @@ class CaptureThread {
 
     private:
         string RTMP_address;
-        FIFOBuffer<cv::Mat>* fifo_buffer_ptr;
+        FIFOBuffer<cv::Mat>* toMain_buffer_ptr;
+        FIFOBuffer<cv::Mat>* toStitch_buffer_ptr;
+
 
         FIFOBuffer<struct ShmemFrameMessage> msg_buffer;
 
@@ -74,7 +76,7 @@ class CaptureThread {
         /*
             Constructor
         */
-        CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* fifo_buffer_ptr);
+        CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr );
 
         
         CaptureThread(

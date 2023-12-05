@@ -102,10 +102,12 @@ int main() {
     network.BindRtmpLink();
 
     //? Capture Thread init ----------------------
-    FIFOBuffer<cv::Mat> fifo_buffer(8);
+    FIFOBuffer<cv::Mat> fifo_buffer_cap(8);
+    FIFOBuffer<cv::Mat> fifo_buffer_sti(8);
     BlockingQueue<cv::Mat> mapBuffer;
-    CaptureThread capturer(network.GetExternalRtmpLink(), &fifo_buffer);
-    StitcherThread stitcher(&fifo_buffer,&mapBuffer);
+
+    CaptureThread capturer(network.GetExternalRtmpLink(), &fifo_buffer_cap, &fifo_buffer_sti);
+    StitcherThread stitcher(&fifo_buffer_sti,&mapBuffer);
     std::thread capturerThread;
     std::thread stitcherThread;
     cv::Mat frame;
@@ -190,7 +192,7 @@ int main() {
 
             //? RENDERING OF THE FRAME TAKEN FROM THE FIFOBUFFER
             if(isCapturing && serverOn){
-                fifo_buffer.pop(&frame);
+                fifo_buffer_cap.pop(&frame);
 
                 ImGui::SameLine();                            
                 ImGui::Text("Capturing frames.");
