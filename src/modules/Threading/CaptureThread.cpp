@@ -32,7 +32,7 @@ CaptureThread::CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_bu
     this->toStitch_buffer_ptr = stitch_buffer_ptr;
 }
 
-
+/*
 CaptureThread::CaptureThread(
     const long initial_buffer_capacity, 
     const char* shmem_name, 
@@ -249,6 +249,7 @@ void CaptureThread::start_v1(){
     cout << "CAPTURE_THREAD: Stopped" << endl;
 
 }
+*/
 
 
 void CaptureThread::start_v2(){

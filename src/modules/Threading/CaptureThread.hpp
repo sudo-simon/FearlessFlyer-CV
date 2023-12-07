@@ -58,35 +58,12 @@ class CaptureThread {
         FIFOBuffer<cv::Mat>* toMain_buffer_ptr;
         FIFOBuffer<cv::Mat>* toStitch_buffer_ptr;
 
-
-        FIFOBuffer<struct ShmemFrameMessage> msg_buffer;
-
-        const char* shmem_name;
-        size_t shmem_size;
-        int shmem_n_frames;
-        int frame_height;
-        int frame_width;
-
-        shared_memory_object shmem;
-        mapped_region mem_region;
-        uint8_t* shmem_ptr;
-
     public:
 
         /*
             Constructor
         */
         CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr );
-
-        
-        CaptureThread(
-            const long initial_buffer_capacity, 
-            const char* shmem_name, 
-            const size_t shmem_size,
-            const int shmem_n_frames,
-            const int frame_height,
-            const int frame_width
-        );
         
         /*
             Deconstructor
