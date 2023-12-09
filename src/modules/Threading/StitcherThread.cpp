@@ -14,6 +14,10 @@ void StitcherThread::Start(){
     }
 }
 
+void StitcherThread::InitializeStitcher(FIFOBuffer<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr){
+    this->fromCap_buffer_ptr = fifo_ptr;
+    this->mapBuffer_ptr = buffer_ptr;
+}
 
 void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 

@@ -60,19 +60,14 @@ class CaptureThread {
 
     public:
 
-        /*
-            Constructor
-        */
-        CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr );
-        
-        /*
-            Deconstructor
-        */
-        ~CaptureThread();
+        CaptureThread() {}
+        ~CaptureThread() {}
 
         /*
             Thread start method
         */
+        void InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr );
+
         void start_v1();
 
         void start_v2();

@@ -26,7 +26,7 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 }
 // ----------------------------------------------------------------
 
-CaptureThread::CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr){
+void CaptureThread::InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr){
     this->RTMP_address = RTMP_addr;
     this->toMain_buffer_ptr = main_buffer_ptr;
     this->toStitch_buffer_ptr = stitch_buffer_ptr;
