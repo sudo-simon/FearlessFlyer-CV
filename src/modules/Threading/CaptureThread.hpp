@@ -4,7 +4,6 @@
 #include "modules/Network/NetConf.hpp"
 #include "modules/BlockingQueue.hpp"
 
-#include <boost/interprocess/creation_tags.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -13,13 +12,10 @@
 #include <p2b/bitmap.hpp>
 #include <string>
 
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
 #include <sys/types.h>
 
 
 using namespace std;
-using namespace boost::interprocess;
 
 
 /*
