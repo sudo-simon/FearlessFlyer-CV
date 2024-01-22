@@ -167,7 +167,7 @@ class WindowsHandler{
                     checks.errorCapturing = false; 
                     
                     //? CAPTURE THREAD START
-                    capturerThread = std::thread(&CaptureThread::start_v2, &capturer);
+                    capturerThread = std::thread(&CaptureThread::Start, &capturer);
                     stitcherThread = std::thread(&StitcherThread::Start, &stitcher);
 
                     myConsole.PrintUI("Capturing...");
