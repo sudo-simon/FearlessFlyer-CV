@@ -56,7 +56,7 @@ class CaptureThread {
     private:
         string RTMP_address;
         FIFOBuffer<cv::Mat>* toMain_buffer_ptr;
-        FIFOBuffer<cv::Mat>* toStitch_buffer_ptr;
+        BlockingQueue<cv::Mat>* toStitch_buffer_ptr;
 
     public:
 
@@ -66,7 +66,7 @@ class CaptureThread {
         /*
             Thread start method
         */
-        void InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr );
+        void InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr );
 
         void start_v1();
 
