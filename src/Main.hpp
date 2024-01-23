@@ -1,6 +1,7 @@
 #pragma once
 
 #include "modules/BlockingQueue.hpp"
+#include "modules/StateBoard.hpp"
 #include "modules/Threading/StitcherThread.hpp"
 #include <buffers.hpp>
 #include <iostream>
@@ -40,6 +41,7 @@ class WindowsHandler{
         FIFOBuffer<cv::Mat> fifo_buffer_cap;
         BlockingQueue<cv::Mat> fifo_buffer_sti;
         BlockingQueue<cv::Mat> mapBuffer;
+        StateBoard termSig;
 
         CaptureThread capturer;
         StitcherThread stitcher;
@@ -85,8 +87,8 @@ class WindowsHandler{
 
             fifo_buffer_cap = FIFOBuffer<cv::Mat>(8);
             //fifo_buffer_sti =  BlockingQueue<cv::Mat>();
-            this->stitcher.InitializeStitcher(&fifo_buffer_sti, &mapBuffer);
-            this->capturer.InitializeCapturer(network.GetExternalRtmpLink(), &fifo_buffer_cap, &fifo_buffer_sti);
+            this->stitcher.InitializeStitcher(&fifo_buffer_sti, &mapBuffer, &termSig);
+            this->capturer.InitializeCapturer(network.GetExternalRtmpLink(), &fifo_buffer_cap, &fifo_buffer_sti, &termSig);
 
             this->window = window;
         }
@@ -167,6 +169,7 @@ class WindowsHandler{
                     checks.errorCapturing = false; 
                     
                     //? CAPTURE THREAD START
+                    termSig.write(false);
                     capturerThread = std::thread(&CaptureThread::Start, &capturer);
                     stitcherThread = std::thread(&StitcherThread::Start, &stitcher);
 
@@ -198,9 +201,18 @@ class WindowsHandler{
 
             if(ImGui::Button("Stop nginx server")){
                 if(checks.serverOn){ 
+
+
+                    termSig.write(true);
+                    
+                    capturerThread.join();
+                    stitcherThread.join();
+
                     network.ServerStop();
+
                     myConsole.PrintUI("Server OFF");
                     Console::Log("Server OFF - RTMP capture dismissed");
+
                 } else {   
                     myConsole.PrintUI("Server already stopped.");
                     Console::Log("Server already stopped.");
@@ -208,7 +220,6 @@ class WindowsHandler{
                 checks.isCapturing = false;
                 checks.serverOn  = false;
             }
-
 
             //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();

@@ -1,10 +1,12 @@
 #include "modules/Threading/CaptureThread.hpp"
 #include "modules/BlockingQueue.hpp"
 #include "modules/Console/Console.hpp"
+#include "modules/StateBoard.hpp"
 
 #include <buffers.hpp>
 #include <cstdint>
 #include <cstring>
+#include <exception>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 
@@ -27,10 +29,11 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 }
 // ----------------------------------------------------------------
 
-void CaptureThread::InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr){
+void CaptureThread::InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr,  StateBoard* termSig){
     this->RTMP_address = RTMP_addr;
     this->toMain_buffer_ptr = main_buffer_ptr;
     this->toStitch_buffer_ptr = stitch_buffer_ptr;
+    this->termSig_ptr = termSig;
 }
 
 
@@ -48,21 +51,24 @@ void CaptureThread::Start(){
     
     int framesCounter = 0;
 
-    while(1){
+
+    bool isTerminated = false;
+    while(!isTerminated){
         cap >> frame;
         if (frame.empty()) continue;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
         this->toMain_buffer_ptr->push(frame);
 
         if(framesCounter == 60){
-            cout << "PUSHED" << endl;
             this->toStitch_buffer_ptr->put(frame);
             framesCounter = 0;
         } else {
             framesCounter++;
         }
+
+        this->termSig_ptr->read(isTerminated);
     }
 
+    this->toStitch_buffer_ptr->put(frame);
     cout << "---- CAPTURE THREAD STOPPED ----" << endl;
-
 }

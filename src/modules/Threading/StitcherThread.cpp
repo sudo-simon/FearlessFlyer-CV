@@ -1,8 +1,10 @@
 
 #include "StitcherThread.hpp"
 #include "modules/BlockingQueue.hpp"
+#include "modules/StateBoard.hpp"
 #include <buffers.hpp>
 #include <cstddef>
+#include <exception>
 #include <iostream>
 #include <opencv2/core/mat.hpp>
 
@@ -14,19 +16,29 @@ void StitcherThread::Start(){
 
     cv::Mat frame;
     std::cout << "---- STITCHER THREAD STARTED ----" << std::endl;
-    while(1){
+
+    bool isTerminated = false;
+    while(!isTerminated){
         this->fromCap_buffer_ptr->take(frame);
         StitchingRoutine(frame);
         if(!frame.empty()){
-            std::cout << "PRINT" << std::endl;
             MapBufferUpdate();
         }
+
+        this->termSig_ptr->read(isTerminated);
     }
+
+    std::cout << "---- STITCHER THREAD STOPPED ----" << std::endl;
 }
 
-void StitcherThread::InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr){
+void StitcherThread::Terminate(){
+    std::terminate();
+}
+
+void StitcherThread::InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr, StateBoard* termSig){
     this->fromCap_buffer_ptr = fifo_ptr;
     this->mapBuffer_ptr = buffer_ptr;
+    this->termSig_ptr = termSig;
 }
 
 void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
