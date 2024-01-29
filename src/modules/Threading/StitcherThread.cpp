@@ -79,27 +79,20 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     cv::Mat homography = cv::findHomography(points1, points2, cv::RANSAC);
     
+    cv::Mat warpedFrame;
+    cv::warpPerspective(newFrame, warpedFrame, homography, lastFrame.size());
 
-    //Calcolata la matrice di omografia bisogna estrarre la matrice di traslazione(?) e rotazione
-    //Applicare l'omografia a newframe e appiccare newframe su map
+//       if(!this->lastMatrix.empty())
+//            translationMatrix = this->lastMatrix + translationMatrix;
 
-    double dx = homography.at<double>(0, 2);
-    double dy = homography.at<double>(1, 2);
-
-    // Create the translation matrix
-    cv::Mat translationMatrix = (cv::Mat_<double>(2, 3) << 1, 0, dx, 0, 1, dy);
-
-    if(!this->lastMatrix.empty())
-        translationMatrix = this->lastMatrix + translationMatrix;
 
     cv::Mat result;
-    cv::warpAffine(newFrame, result, translationMatrix, cv::Size(0,0));
-
-    this->map.copyTo(result(cv::Rect(0,0,this->map.cols, this->map.rows)));
+    cv::addWeighted(this->map, 1.0, warpedFrame, 0.5, 0, result);
+    //this->map.copyTo(result(cv::Rect(0,0,this->map.cols, this->map.rows)));
 
     this->map = result;
 
-    this->lastMatrix = translationMatrix;
+//    this->lastMatrix = translationMatrix;
 
     std::cout << "STITCHED" << std::endl;
 }
