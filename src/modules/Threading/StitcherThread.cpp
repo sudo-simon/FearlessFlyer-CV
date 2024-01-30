@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <exception>
 #include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
 
 #include <opencv2/core/matx.hpp>
@@ -47,6 +49,8 @@ void StitcherThread::InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, Blocki
 
 void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
+    std::cout << "STITCH" << std::endl;
+
     cv::Mat img1 = cv::imread("/home/lor3n/Dev/RTMP/scripts/1.png");
     cv::Mat img2 = cv::imread("/home/lor3n/Dev/RTMP/scripts/2.png");
 
@@ -85,9 +89,6 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     double dx = -H.at<double>(0, 2);
     double dy = -H.at<double>(1, 2);
 
-    std::cout << dx << std::endl;
-    std::cout << dy << std::endl;
-
     int bottom = 0, left = 0, right = 0, top = 0;
 
     if (dy > 0) {
@@ -115,11 +116,8 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     int yError = imgWarped.rows - img1.rows;
     int xError = imgWarped.cols - img1.cols;
 
-    std::cout << xError << std::endl;
-    std::cout << yError << std::endl;
-
     for (int i = y_offset; i < imgWarped.rows + y_offset - yError; ++i) {
-        for (int j = x_offset; j < imgWarped.cols + x_offset - xError; ++j) {
+        for (int j = x_offset; j < imgWarped.cols >+ x_offset - xError; ++j) {
             if (imgWarped.at<cv::Vec3f>(i - y_offset, j - x_offset) == cv::Vec3f(0,0,0)) {
                 continue;
             }
@@ -127,7 +125,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         }
     }
 
-    cv::imwrite("res.png", imageWithBorder);
+    cv::imwrite("res.png", imgWarped);
 }
 
 
@@ -139,33 +137,68 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, const cv::
     const float height = srcImage.rows;
     const float width = srcImage.cols;
 
-
-    std::vector<cv::Point2f> srcCorners;
-    srcCorners.push_back(cv::Point2f(0,0));
-    srcCorners.push_back(cv::Point2f(width,0));
-    srcCorners.push_back(cv::Point2f(width,height));
-    srcCorners.push_back(cv::Point2f(0,height));
+    cv::Vec2f data[4] = {cv::Vec2f(0,0),cv::Vec2f(width,0),cv::Vec2f(width,height), cv::Vec2f(0,height)};
+    cv::Mat srcCorners = cv::Mat(4, 1, CV_32FC2, data); 
     // Create a new 2x3 matrix with the defined values
-    std::vector<cv::Point2f> dstCorners;
-
-    cv::getPerspectiveTransform(srcCorners, dstCorners);
-
-    std::cout << srcCorners <<std::endl;
+    cv::Mat dstCorners = cv::Mat(4,2, CV_32FC2);
     
     cv::perspectiveTransform(srcCorners, dstCorners, transformationMatrix);
 
     //trova il minimo ed il massimo su l'asse delle x e delle y
-    int maxX = 0, minX = 0;
-    int maxY = 0, minY = 0;
+    float maxX = 0, minX = 0;
+    float maxY = 0, minY = 0;
+
+    for (int i = 0; i < dstCorners.rows; ++i) {
+        for (int j = 0; j < dstCorners.cols; ++j) {
+            cv::Vec2f point = dstCorners.at<cv::Vec2f>(i, j);
+            float x = point[0];
+            float y = point[1];
+
+            // Update min and max values
+            minX = std::min(minX, x);
+            minY = std::min(minY, y);
+            maxX = std::max(maxX, x);
+            maxY = std::max(maxY, y);
+        }
+    }
+
+
+    std::cout << maxX << std::endl;
 
     int dstWidth = static_cast<int>(maxX - minX);
     int dstHeight = static_cast<int>(maxY - minY);
 
-    cv::Mat shiftMatrix = (cv::Mat_<float>(3, 3) << 1, 0, -minX, 0, 1, -minY, 0, 0, 1);
-    cv::Mat adjustedMatrix = shiftMatrix * transformationMatrix;
+
+    float dataShift[9] = {1, 0, -minX, 0, 1, -minY, 0, 0, 1};
+    cv::Mat shiftMatrix = cv::Mat(3, 3, CV_64F, dataShift); 
+
+    cv::Mat adjustedMatrix = numpyDot(shiftMatrix, transformationMatrix);
+
+    std::cout <<adjustedMatrix<<std::endl;
 
     cv::Mat dstImage;
     cv::warpPerspective(srcImage, dstImage, adjustedMatrix, cv::Size(dstWidth, dstHeight));
 
     return dstImage;
+}
+
+cv::Mat StitcherThread::numpyDot(cv::Mat A, cv::Mat B){
+
+    int rows1 = A.rows;
+    int cols1 = A.cols;
+    int cols2 = B.cols;
+
+    // Initialize the result matrix with zeros
+   cv::Mat result = cv::Mat(rows1, cols2, CV_64F);
+
+    // Perform the dot product
+    for (int i = 0; i < rows1; ++i) {
+        for (int j = 0; j < cols2; ++j) {
+            for (int k = 0; k < cols1; ++k) {
+                result.at<float>(i,j) += A.at<float>(i,k) * B.at<float>(k,j);
+            }
+        }
+    }
+
+    return result;
 }
