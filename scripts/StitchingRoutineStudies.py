@@ -25,6 +25,7 @@ def warp_perspective_no_cut(src_image, transformation_matrix):
 
     # Adjust the transformation matrix to shift the image to the positive quadrant
     shift_matrix = np.array([[1, 0, -min_x], [0, 1, -min_y], [0, 0, 1]])
+    print(shift_matrix)
     adjusted_matrix = np.dot(shift_matrix, transformation_matrix)
 
     # Use warpPerspective with the adjusted transformation matrix and new destination size
