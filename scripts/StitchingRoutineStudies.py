@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
+import math
 
 # Read input images
-img1 = cv2.imread('1.png')
-img2 = cv2.imread('2.png')
+img1 = cv2.imread('/home/lor3n/Dev/RTMP/scripts/1.png')
+img2 = cv2.imread('/home/lor3n/Dev/RTMP/scripts/2.png')
 
 def warp_perspective_no_cut(src_image, transformation_matrix):
     # Get the height and width of the source image
@@ -31,9 +32,6 @@ def warp_perspective_no_cut(src_image, transformation_matrix):
 
     return dst_image
 
-if img1 is None or img2 is None:
-    print("Error loading images.")
-    exit()
 
 # Detect key points and extract descriptors
 detector = cv2.ORB_create()
@@ -61,20 +59,63 @@ points2 = np.float32([keypoints2[m.trainIdx].pt for m in matches]).reshape(-1, 1
 H, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
 
 #
-imgWarped = warp_perspective_no_cut(img1, H)
+imgWarped = warp_perspective_no_cut(img2, H)
 
 # translation components
-x_vec = H[0]
-y_vec = H[1]
+
+
+dx = H[0,2]*-1
+dy = H[1, 2]*-1
+
+print(dx)
+print(dy)
+
+#for match in matches:
+#    print(match.)
 
 
 # Ablend two images: 
 # 1. take the first image and add borders following the translation components
 # 2. inizia a copiare l'immagine a (sign(x_vec)*ceil(abs(x-vec)), sign(y_vec)*ceil(abs(y_vec)))
+bottom = 0
+left = 0
+right = 0
+top = 0
+
+if(dy>0):
+    top = math.ceil(dy)
+    bottom = 0
+else:
+    top = 0
+    bottom = math.ceil(abs(dy))
+
+if(dx>0):
+    left=0
+    right=math.ceil(dx)
+else:
+    left=math.ceil(abs(dx))
+    right=0
+
+image_with_border = cv2.copyMakeBorder(img1, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(0,0,0))
+
+x_offset, y_offset = int(np.sign(dx)*math.ceil(abs(dx))),int(np.sign(dy)*math.ceil(abs(dy)))  # Adjust these values based on where you want to place the smaller image
+
+#calcolo dello scarto
+
+y_error = imgWarped.shape[0]-img1.shape[0]
+x_error = imgWarped.shape[1]-img1.shape[1]
+
+print(x_error)
+print(y_error)
+
+#blending
+for i in range(y_offset, imgWarped.shape[0]+y_offset-y_error):
+    for j in range(x_offset, imgWarped.shape[1]+x_offset-x_error):
+
+        if np.all(imgWarped[i-y_offset][j-x_offset] == [0, 0, 0]):
+            continue
+        image_with_border[i][j] = imgWarped[i-y_offset][j-x_offset]
 
 
 
-# Display the result
-cv2.imshow("Result", imgWarped)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+cv2.imwrite("res.png", image_with_border)

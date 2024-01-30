@@ -20,6 +20,7 @@ class StitcherThread {
 
         void StitchingRoutine(cv::Mat& newFrame);
         inline void MapBufferUpdate();
+        cv::Mat warpPerspectiveNoCut(const cv::Mat& srcImage, const cv::Mat& transformationMatrix);
 
     public:
         StitcherThread() {}
@@ -28,5 +29,6 @@ class StitcherThread {
         void InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr, StateBoard* termSig);
         void Start();
         void Terminate();
+
 
 };
