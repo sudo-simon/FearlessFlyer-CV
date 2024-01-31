@@ -20,8 +20,7 @@ class StitcherThread {
 
         void StitchingRoutine(cv::Mat& newFrame);
         inline void MapBufferUpdate();
-        cv::Mat warpPerspectiveNoCut(const cv::Mat& srcImage, const cv::Mat& transformationMatrix);
-        cv::Mat numpyDot(cv::Mat A, cv::Mat B);
+        cv::Mat warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat transformationMatrix);
 
     public:
         StitcherThread() {}

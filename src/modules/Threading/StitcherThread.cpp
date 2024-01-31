@@ -82,12 +82,18 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         points2.push_back(keypoints2[match.trainIdx].pt);
     }
 
+    /* Bisogna capire perchè l' homografia viene diversa da python, verificare che i points siano uguali e capire da cosa deriva la differenza*/
+
     cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC);
 
     cv::Mat imgWarped = warpPerspectiveNoCut(img2, H);
 
     double dx = -H.at<double>(0, 2);
     double dy = -H.at<double>(1, 2);
+
+    cv::imwrite("res.png", imgWarped);
+
+    /* Bisogna capire come copiare, seguendo una regola generale*/
 
     int bottom = 0, left = 0, right = 0, top = 0;
 
@@ -117,15 +123,16 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     int xError = imgWarped.cols - img1.cols;
 
     for (int i = y_offset; i < imgWarped.rows + y_offset - yError; ++i) {
+        std::cout << i << std::endl;
         for (int j = x_offset; j < imgWarped.cols + x_offset - xError; ++j) {
             if (imgWarped.at<cv::Vec3f>(i - y_offset, j - x_offset) == cv::Vec3f(0,0,0)) {
                 continue;
             }
-            imageWithBorder.row(i).col(j) = imgWarped.row(i - y_offset).col(j - x_offset);
+            imageWithBorder.at<cv::Vec3f>(i,j) = imageWithBorder.at<cv::Vec3f>(i,j) = imgWarped.at<cv::Vec3f>(i-y_offset, j-x_offset);
         }
     }
 
-    cv::imwrite("res.png", imgWarped);
+    cv::imwrite("res.png", imageWithBorder);
 }
 
 
@@ -133,12 +140,13 @@ inline void StitcherThread::MapBufferUpdate(){
     this->mapBuffer_ptr->put(this->map);
 }
 
-cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, const cv::Mat& transformationMatrix) {
+cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat transformationMatrix) {
     const float height = srcImage.rows;
     const float width = srcImage.cols;
 
     cv::Vec2f data[4] = {cv::Vec2f(0,0),cv::Vec2f(width,0),cv::Vec2f(width,height), cv::Vec2f(0,height)};
     cv::Mat srcCorners = cv::Mat(4, 1, CV_32FC2, data); 
+
     // Create a new 2x3 matrix with the defined values
     cv::Mat dstCorners = cv::Mat(4,2, CV_32FC2);
     
@@ -168,50 +176,22 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, const cv::
     int dstWidth = static_cast<int>(maxX - minX);
     int dstHeight = static_cast<int>(maxY - minY);
 
-
-    /* TO FIX 
-    
-    La matrice adjustedMatrix ed è dovutoalla matrice shiftMatrix (non ho conferme per ora su numpyDot):
-        1. I valori di dataShift non vengono riportati durante la creazione: cambiare modalità di creazione o capire perchè
-        2. Una volta risolto, verificare che shiftMatrix abbia la seguente forma:
-                    [[  1.           0.         239.26478577]
-                     [  0.           1.           6.29026461]
-                     [  0.           0.           1.        ]]
-        3. Quindi verificare che minX e minY sia calcolati correttamente
-        4. Verificare numpyDot
-        5. Se tutto funziona, adjustedMatrix dovrebbe essere corretta
-
-    TO FIX */
-
     
     float dataShift[9] = {1, 0, -minX, 0, 1, -minY, 0, 0, 1};
-    cv::Mat shiftMatrix = cv::Mat(3, 3, CV_64F, dataShift); 
-    std::cout << shiftMatrix << std::endl;
-    cv::Mat adjustedMatrix = numpyDot(shiftMatrix, transformationMatrix);
+    cv::Mat shiftMatrix = cv::Mat(3, 3, CV_32F, dataShift); 
+
+    transformationMatrix.convertTo(transformationMatrix, CV_32F);
+
+    cv::Mat adjustedMatrix;
+    std::cout << shiftMatrix.type() <<std::endl;
+    std::cout << transformationMatrix.type() <<std::endl;
+    cv::gemm(shiftMatrix, transformationMatrix, 1.0, cv::Mat(), 0.0, adjustedMatrix);
+
+    std::cout << adjustedMatrix <<std::endl;
 
     cv::Mat dstImage;
     cv::warpPerspective(srcImage, dstImage, adjustedMatrix, cv::Size(dstWidth, dstHeight));
-    
+
+
     return dstImage;
-}
-
-cv::Mat StitcherThread::numpyDot(cv::Mat A, cv::Mat B){
-
-    int rows1 = A.rows;
-    int cols1 = A.cols;
-    int cols2 = B.cols;
-
-    // Initialize the result matrix with zeros
-   cv::Mat result = cv::Mat(rows1, cols2, CV_64F);
-
-    // Perform the dot product
-    for (int i = 0; i < rows1; ++i) {
-        for (int j = 0; j < cols2; ++j) {
-            for (int k = 0; k < cols1; ++k) {
-                result.at<float>(i,j) += A.at<float>(i,k) * B.at<float>(k,j);
-            }
-        }
-    }
-
-    return result;
 }
