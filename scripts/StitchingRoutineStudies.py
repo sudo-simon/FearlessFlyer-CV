@@ -26,9 +26,6 @@ def warp_perspective_no_cut(src_image, transformation_matrix):
     # Adjust the transformation matrix to shift the image to the positive quadrant
     shift_matrix = np.array([[1, 0, -min_x], [0, 1, -min_y], [0, 0, 1]])
     adjusted_matrix = np.dot(shift_matrix, transformation_matrix)
-    print(shift_matrix)
-    print(transformation_matrix)
-    print(adjusted_matrix)
 
     # Use warpPerspective with the adjusted transformation matrix and new destination size
     dst_image = cv2.warpPerspective(src_image, adjusted_matrix, (dst_width, dst_height))
@@ -59,6 +56,17 @@ matches = matches[:numGoodMatches]
 # Homography matrix
 points1 = np.float32([keypoints1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
 points2 = np.float32([keypoints2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+
+for point in points1:
+    print(point)
+
+print("-------")
+
+for point in points2:
+    print(point)
+
+
+
 H, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
 
 #
@@ -70,8 +78,6 @@ imgWarped = warp_perspective_no_cut(img2, H)
 dx = H[0,2]*-1
 dy = H[1, 2]*-1
 
-print(dx)
-print(dy)
 
 #for match in matches:
 #    print(match.)
@@ -107,9 +113,6 @@ x_offset, y_offset = int(np.sign(dx)*math.ceil(abs(dx))),int(np.sign(dy)*math.ce
 
 y_error = imgWarped.shape[0]-img1.shape[0]
 x_error = imgWarped.shape[1]-img1.shape[1]
-
-print(x_error)
-print(y_error)
 
 #blending
 for i in range(y_offset, imgWarped.shape[0]+y_offset-y_error):

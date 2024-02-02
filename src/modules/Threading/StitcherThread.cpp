@@ -69,22 +69,24 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     std::vector<cv::DMatch> matches;
     matcher.match(descriptor1, descriptor2, matches);
 
+    //Il problema è nel sorting, bisogna selezionare i match che condividono la stessa distanza non quelli con la distanza più lunga
+
     std::sort(matches.begin(), matches.end(), [](const cv::DMatch& a, const cv::DMatch& b) {
         return a.distance < b.distance;
     });
 
-    int numGoodMatches = static_cast<int>(matches.size() * 0.15);
+    // Matcher treshold 0.1 and RANSAC treshold 3.0 seems the best choice
+
+    int numGoodMatches = (int) (matches.size() * 0.1);
     matches.resize(numGoodMatches);
 
-    cv::Mat points1, points2;
+    std::vector<cv::Point2f> points1, points2;
     for (const auto& match : matches) {
         points1.push_back(keypoints1[match.queryIdx].pt);
         points2.push_back(keypoints2[match.trainIdx].pt);
     }
 
-    /* Bisogna capire perchè l' homografia viene diversa da python, verificare che i points siano uguali e capire da cosa deriva la differenza*/
-
-    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC);
+    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, 3.0);
 
     cv::Mat imgWarped = warpPerspectiveNoCut(img2, H);
 
@@ -93,7 +95,23 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     cv::imwrite("res.png", imgWarped);
 
-    /* Bisogna capire come copiare, seguendo una regola generale*/
+    /* BLENDING sembra funzionare, da correggere xError e yError*/
+    /* START OFFSET */
+    
+    int x_offset = 0;
+    int y_offset = 0;
+
+    if(dx<0){
+        x_offset = 0;
+    }else{
+        x_offset = (int) std::ceil(std::abs(dx));
+    }
+
+    if(dy>0){
+        y_offset = 0;
+    }else{
+        y_offset = (int) std::ceil(std::abs(dy));
+    }
 
     int bottom = 0, left = 0, right = 0, top = 0;
 
@@ -113,24 +131,32 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         right = 0;
     }
 
+    /* END OFFSET */
+
     cv::Mat imageWithBorder;
     cv::copyMakeBorder(img1, imageWithBorder, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-
-    int x_offset = static_cast<int>(std::copysign(std::ceil(std::abs(dx)), dx));
-    int y_offset = static_cast<int>(std::copysign(std::ceil(std::abs(dy)), dy));
 
     int yError = imgWarped.rows - img1.rows;
     int xError = imgWarped.cols - img1.cols;
 
+    std::cout<<dx<<std::endl;
+    std::cout<<dy<<std::endl;
+
+    std::cout<<y_offset<<std::endl;
+    std::cout<<x_offset<<std::endl;
+
     for (int i = y_offset; i < imgWarped.rows + y_offset - yError; ++i) {
-        std::cout << i << std::endl;
         for (int j = x_offset; j < imgWarped.cols + x_offset - xError; ++j) {
-            if (imgWarped.at<cv::Vec3f>(i - y_offset, j - x_offset) == cv::Vec3f(0,0,0)) {
+            
+            if (imgWarped.at<cv::Vec3b>(i - y_offset, j - x_offset) == cv::Vec3b(0,0,0)) {
                 continue;
             }
-            imageWithBorder.at<cv::Vec3f>(i,j) = imageWithBorder.at<cv::Vec3f>(i,j) = imgWarped.at<cv::Vec3f>(i-y_offset, j-x_offset);
+            
+            
+            imageWithBorder.at<cv::Vec3b>(i,j) = imgWarped.at<cv::Vec3b>(i-y_offset, j-x_offset);
         }
     }
+    
 
     cv::imwrite("res.png", imageWithBorder);
 }
@@ -170,9 +196,6 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat tr
         }
     }
 
-
-    std::cout << maxX << std::endl;
-
     int dstWidth = static_cast<int>(maxX - minX);
     int dstHeight = static_cast<int>(maxY - minY);
 
@@ -183,8 +206,6 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat tr
     transformationMatrix.convertTo(transformationMatrix, CV_32F);
 
     cv::Mat adjustedMatrix;
-    std::cout << shiftMatrix.type() <<std::endl;
-    std::cout << transformationMatrix.type() <<std::endl;
     cv::gemm(shiftMatrix, transformationMatrix, 1.0, cv::Mat(), 0.0, adjustedMatrix);
 
     std::cout << adjustedMatrix <<std::endl;
