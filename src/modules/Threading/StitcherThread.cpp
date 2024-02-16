@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <exception>
 #include <iostream>
+#include <iterator>
 #include <opencv2/core.hpp>
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
@@ -79,7 +80,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     // Matcher treshold 0.1 and RANSAC treshold 3.0 seems the best choice
 
-    int numGoodMatches = (int) (matches.size() * 0.1);
+    int numGoodMatches = (int) (matches.size() * 0.5);
     matches.resize(numGoodMatches);
 
     std::vector<cv::Point2f> points1, points2;
@@ -95,7 +96,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     
 
     double dx = -H.at<double>(0, 2);
-    double dy = -H.at<double>(1, 2);
+    double dy = H.at<double>(1, 2);
 
     double bordDx = dx;
     double bordDy = dy;
@@ -130,7 +131,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     int bottom = 0, left = 0, right = 0, top = 0;
 
-    if (dy > 0) {
+    if (bordDy > 0) {
         top = std::ceil(bordDy);
         bottom = 0;
     } else {
@@ -138,7 +139,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         bottom = std::ceil(std::abs(bordDy));
     }
 
-    if (dx > 0) {
+    if (bordDx > 0) {
         left = 0;
         right = std::ceil(bordDx);
     } else {
@@ -146,14 +147,18 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         right = 0;
     }
 
+
+    std::cout << left << std::endl;
+    std::cout << right << std::endl;
+    std::cout << top << std::endl;
+    std::cout << bottom << std::endl;
+
+
     /* END OFFSET */
     cv::copyMakeBorder(this->map, this->map, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
     int yError = imgWarped.rows - lastFrame.rows;
     int xError = imgWarped.cols - lastFrame.cols;
-
-    std::cout << imgWarped.channels() <<std::endl;
-    std::cout << this->map.channels() <<std::endl;
 
     for (int i = y_offset; i < imgWarped.rows + y_offset - yError; i++) {
         for (int j = x_offset; j < imgWarped.cols + x_offset - xError; j++) {
