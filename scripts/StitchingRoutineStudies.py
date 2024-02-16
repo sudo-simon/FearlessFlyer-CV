@@ -49,39 +49,17 @@ matches = sorted(matches, key=lambda x: x.distance)
 numGoodMatches = int(len(matches) * 0.15)
 matches = matches[:numGoodMatches]
 
-# imgMatches = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches, None)
-# cv2.imshow("Matches", imgMatches)
-# cv2.waitKey(0)
-
 # Homography matrix
 points1 = np.float32([keypoints1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
 points2 = np.float32([keypoints2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
 
-for point in points1:
-    print(point)
-
-print("-------")
-
-for point in points2:
-    print(point)
-
-
-
 H, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
 
-#
 imgWarped = warp_perspective_no_cut(img2, H)
-
-# translation components
 
 
 dx = H[0,2]*-1
 dy = H[1, 2]*-1
-
-
-#for match in matches:
-#    print(match.)
-
 
 # Ablend two images: 
 # 1. take the first image and add borders following the translation components

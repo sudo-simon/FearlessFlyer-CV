@@ -15,6 +15,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/opencv.hpp>
 #include <ostream>
+#include <string>
 #include <vector>
 
 
@@ -23,14 +24,16 @@ void StitcherThread::Start(){
     cv::Mat frame;
     std::cout << "---- STITCHER THREAD STARTED ----" << std::endl;
 
+    frame_counter = 0;
+
     bool isTerminated = false;
     while(!isTerminated){
         this->fromCap_buffer_ptr->take(frame);
         StitchingRoutine(frame);
         if(!frame.empty()){
             MapBufferUpdate();
+            frame_counter+=1;
         }
-
         this->termSig_ptr->read(isTerminated);
     }
 
@@ -49,21 +52,20 @@ void StitcherThread::InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, Blocki
 
 void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
-    std::cout << "STITCH" << std::endl;
+    std::cout << "STITCH START" << std::endl;
 
-    cv::Mat img1 = cv::imread("/home/lor3n/Dev/RTMP/scripts/1.png");
-    cv::Mat img2 = cv::imread("/home/lor3n/Dev/RTMP/scripts/2.png");
-
-    if(img1.empty() || img2.empty()){
-        std::cout << "immagini non trovate";
+    if(lastFrame.empty()){
+        lastFrame = newFrame;
+        this->map = lastFrame;
+        return;
     }
 
     cv::Ptr<cv::ORB> detector = cv::ORB::create();
     std::vector<cv::KeyPoint> keypoints1, keypoints2;
     cv::Mat descriptor1, descriptor2;
 
-    detector->detectAndCompute(img1, cv::noArray(), keypoints1, descriptor1);
-    detector->detectAndCompute(img2, cv::noArray(), keypoints2, descriptor2);
+    detector->detectAndCompute(lastFrame, cv::noArray(), keypoints1, descriptor1);
+    detector->detectAndCompute(newFrame, cv::noArray(), keypoints2, descriptor2);
 
     cv::BFMatcher matcher(cv::NORM_HAMMING);
     std::vector<cv::DMatch> matches;
@@ -88,12 +90,25 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, 3.0);
 
-    cv::Mat imgWarped = warpPerspectiveNoCut(img2, H);
+
+    cv::Mat imgWarped = warpPerspectiveNoCut(newFrame, H);
+    
 
     double dx = -H.at<double>(0, 2);
     double dy = -H.at<double>(1, 2);
 
-    cv::imwrite("res.png", imgWarped);
+    double bordDx = dx;
+    double bordDy = dy;
+
+    if(frame_counter==0){
+        this->last_dx = dx;
+        this->last_dy = dy;
+    } else {
+        dx += last_dx;
+        dy += last_dy;
+        this->last_dx = dx;
+        this->last_dy = dy;
+    }
 
     /* BLENDING sembra funzionare, da correggere xError e yError*/
     /* START OFFSET */
@@ -116,49 +131,47 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     int bottom = 0, left = 0, right = 0, top = 0;
 
     if (dy > 0) {
-        top = std::ceil(dy);
+        top = std::ceil(bordDy);
         bottom = 0;
     } else {
         top = 0;
-        bottom = std::ceil(std::abs(dy));
+        bottom = std::ceil(std::abs(bordDy));
     }
 
     if (dx > 0) {
         left = 0;
-        right = std::ceil(dx);
+        right = std::ceil(bordDx);
     } else {
-        left = std::ceil(std::abs(dx));
+        left = std::ceil(std::abs(bordDx));
         right = 0;
     }
 
     /* END OFFSET */
+    cv::copyMakeBorder(this->map, this->map, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
-    cv::Mat imageWithBorder;
-    cv::copyMakeBorder(img1, imageWithBorder, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+    int yError = imgWarped.rows - lastFrame.rows;
+    int xError = imgWarped.cols - lastFrame.cols;
 
-    int yError = imgWarped.rows - img1.rows;
-    int xError = imgWarped.cols - img1.cols;
+    std::cout << imgWarped.channels() <<std::endl;
+    std::cout << this->map.channels() <<std::endl;
 
-    std::cout<<dx<<std::endl;
-    std::cout<<dy<<std::endl;
-
-    std::cout<<y_offset<<std::endl;
-    std::cout<<x_offset<<std::endl;
-
-    for (int i = y_offset; i < imgWarped.rows + y_offset - yError; ++i) {
-        for (int j = x_offset; j < imgWarped.cols + x_offset - xError; ++j) {
+    for (int i = y_offset; i < imgWarped.rows + y_offset - yError; i++) {
+        for (int j = x_offset; j < imgWarped.cols + x_offset - xError; j++) {
             
-            if (imgWarped.at<cv::Vec3b>(i - y_offset, j - x_offset) == cv::Vec3b(0,0,0)) {
+            if (imgWarped.at<cv::Vec4b>(i - y_offset, j - x_offset) == cv::Vec4b(0,0,0, 0)) {
                 continue;
             }
             
             
-            imageWithBorder.at<cv::Vec3b>(i,j) = imgWarped.at<cv::Vec3b>(i-y_offset, j-x_offset);
+            this->map.at<cv::Vec4b>(i,j) = imgWarped.at<cv::Vec4b>(i-y_offset, j-x_offset);
         }
     }
-    
 
-    cv::imwrite("res.png", imageWithBorder);
+    this->lastFrame = newFrame;
+
+    cv::imwrite(std::to_string(frame_counter)+"result.jpeg",this->map);
+
+    std::cout << "STITCH STOP" << std::endl;
 }
 
 
@@ -207,8 +220,6 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat tr
 
     cv::Mat adjustedMatrix;
     cv::gemm(shiftMatrix, transformationMatrix, 1.0, cv::Mat(), 0.0, adjustedMatrix);
-
-    std::cout << adjustedMatrix <<std::endl;
 
     cv::Mat dstImage;
     cv::warpPerspective(srcImage, dstImage, adjustedMatrix, cv::Size(dstWidth, dstHeight));

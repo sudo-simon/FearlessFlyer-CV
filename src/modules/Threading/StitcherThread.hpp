@@ -13,9 +13,9 @@ class StitcherThread {
         StateBoard* termSig_ptr;
         cv::Mat map;
         cv::Mat lastFrame;
-        cv::Mat lastMatrix;
-        cv::Mat lastDescriptor;
-        std::vector<cv::KeyPoint> lastKeypoints;
+        double last_dx;
+        double last_dy;
+        int frame_counter;
 
 
         void StitchingRoutine(cv::Mat& newFrame);
