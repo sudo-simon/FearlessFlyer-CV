@@ -44,7 +44,7 @@ void CaptureThread::Start(){
     cv::Mat frame;
     //cv::VideoCapture cap(0);
     //cv::VideoCapture cap(this->RTMP_address);
-    cv::VideoCapture cap("2.mp4");
+    cv::VideoCapture cap("DJI_0145.mp4");
 
     if(!cap.isOpened()){
         Console::LogError("VideoCapture() failed");
@@ -60,7 +60,7 @@ void CaptureThread::Start(){
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
         this->toMain_buffer_ptr->push(frame);
 
-        if(framesCounter == 30){
+        if(framesCounter == 15){
             this->toStitch_buffer_ptr->put(frame);
             framesCounter = 0;
         } else {

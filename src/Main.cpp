@@ -19,6 +19,7 @@ int main() {
     if (window == nullptr){
         //Handling
     }
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
@@ -70,22 +71,17 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        {
+            handler.MapWindow();
+            handler.SettingsWindow();
+            handler.CaptureWindow();
+        }
+
         //WINDOWS
         if(handler.checks.show_console){
             handler.ShowConsole();
         }
 
-        {
-            handler.SettingsWindow();
-        }
-
-        if(handler.checks.show_map_viewer){
-            handler.MapWindow();
-        }
-
-        if(handler.checks.show_capture_viewer && handler.checks.isCapturing){
-            handler.CaptureWindow();
-        }
 
         if(handler.checks.show_help_window)
         {

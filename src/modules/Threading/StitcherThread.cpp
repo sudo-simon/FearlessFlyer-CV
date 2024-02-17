@@ -79,9 +79,9 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     });
 
     // Matcher treshold 0.1 and RANSAC treshold 3.0 seems the best choice
-
-    int numGoodMatches = (int) (matches.size() * 0.5);
+    int numGoodMatches = (int) (matches.size() * 0.7);
     matches.resize(numGoodMatches);
+
 
     std::vector<cv::Point2f> points1, points2;
     for (const auto& match : matches) {
@@ -89,11 +89,11 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         points2.push_back(keypoints2[match.trainIdx].pt);
     }
 
-    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, 3.0);
+
+    cv::Mat H = cv::findHomography(points1, points2,cv::RANSAC, 3.0);
 
 
     cv::Mat imgWarped = warpPerspectiveNoCut(newFrame, H);
-    
 
     double dx = -H.at<double>(0, 2);
     double dy = H.at<double>(1, 2);
@@ -120,13 +120,13 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     if(dx<0){
         x_offset = 0;
     }else{
-        x_offset = (int) std::ceil(std::abs(dx));
+        x_offset = (int) std::round(std::abs(dx));
     }
 
     if(dy>0){
         y_offset = 0;
     }else{
-        y_offset = (int) std::ceil(std::abs(dy));
+        y_offset = (int) std::round(std::abs(dy));
     }
 
     int bottom = 0, left = 0, right = 0, top = 0;
@@ -162,8 +162,8 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     for (int i = y_offset; i < imgWarped.rows + y_offset - yError; i++) {
         for (int j = x_offset; j < imgWarped.cols + x_offset - xError; j++) {
-            
-            if (imgWarped.at<cv::Vec4b>(i - y_offset, j - x_offset) == cv::Vec4b(0,0,0, 0)) {
+
+            if (imgWarped.at<cv::Vec4b>(i - y_offset, j - x_offset)[3] < 255) {
                 continue;
             }
             
@@ -174,7 +174,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     this->lastFrame = newFrame;
 
-    cv::imwrite(std::to_string(frame_counter)+"result.jpeg",this->map);
+    cv::imwrite("stitchres/"+std::to_string(frame_counter)+"result.jpeg",this->map);
 
     std::cout << "STITCH STOP" << std::endl;
 }

@@ -22,8 +22,6 @@
 
 struct WindowsCheck{
     bool show_demo_window = false;
-    bool show_map_viewer = false;
-    bool show_capture_viewer = false;
     bool show_help_window = false;
     bool show_console = false;
     bool serverOn = false;
@@ -117,8 +115,7 @@ class WindowsHandler{
 
         void CaptureWindow()
         {
-            window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-            ImGui::Begin("Live Capture", NULL, window_flags);    
+            ImGui::Begin("Live");    
             WindowsHandler::ImageViewer(frame);
             ImGui::End();
         }
@@ -128,7 +125,11 @@ class WindowsHandler{
             if(mapBuffer.changed){
                 mapBuffer.take(map);
             }
-            window_flags = ImGuiWindowFlags_NoCollapse;
+
+            window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
+            const ImGuiViewport* viewport = ImGui::GetMainViewport();
+            ImGui::SetNextWindowSize(viewport->Size);
+            ImGui::SetNextWindowPos(viewport->Pos);
             ImGui::Begin("Map Viewer", NULL, window_flags);    
             WindowsHandler::ImageViewer(map);
             ImGui::End();
@@ -139,8 +140,6 @@ class WindowsHandler{
 
             ImGui::Begin("Settings");            
             ImGui::Checkbox("Console", &checks.show_console);
-            ImGui::Checkbox("Map Viewer", &checks.show_map_viewer);
-            ImGui::Checkbox("Capture Viewer", &checks.show_capture_viewer);
             ImGui::Checkbox("Help", &checks.show_help_window);
 
             if (ImGui::Button("Start nginx server")){
