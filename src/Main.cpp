@@ -72,7 +72,7 @@ int main() {
         ImGui::NewFrame();
 
         {
-            handler.MapWindow();
+            //handler.MapWindow();
             handler.SettingsWindow();
             handler.CaptureWindow();
         }

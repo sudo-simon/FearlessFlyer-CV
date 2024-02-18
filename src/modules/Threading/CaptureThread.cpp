@@ -42,9 +42,9 @@ void CaptureThread::Start(){
     cout << "---- CAPTURE THREAD STARTED ----" << endl;
 
     cv::Mat frame;
-    //cv::VideoCapture cap(0);
+
     //cv::VideoCapture cap(this->RTMP_address);
-    cv::VideoCapture cap("DJI_0145.mp4");
+    cv::VideoCapture cap("videoTest/DJI_0149.mp4");
 
     if(!cap.isOpened()){
         Console::LogError("VideoCapture() failed");
@@ -60,14 +60,19 @@ void CaptureThread::Start(){
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
         this->toMain_buffer_ptr->push(frame);
 
-        if(framesCounter == 15){
+        if(framesCounter == 30){
             this->toStitch_buffer_ptr->put(frame);
+
             framesCounter = 0;
         } else {
             framesCounter++;
         }
 
+        // Uncomment this operation only if you are using a video test
+        std::this_thread::sleep_for(0.5s);
+
         this->termSig_ptr->read(isTerminated);
+
     }
 
     this->toStitch_buffer_ptr->put(frame);

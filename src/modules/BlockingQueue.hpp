@@ -14,7 +14,7 @@ class BlockingQueue
         std::condition_variable condNotEmpty;
         std::condition_variable condNotFull;
         int count; // Guard with Mutex
-        const int MAX{5};
+        const int MAX{10};
 
     public:
 

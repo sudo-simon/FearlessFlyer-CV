@@ -147,13 +147,6 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         right = 0;
     }
 
-
-    std::cout << left << std::endl;
-    std::cout << right << std::endl;
-    std::cout << top << std::endl;
-    std::cout << bottom << std::endl;
-
-
     /* END OFFSET */
     cv::copyMakeBorder(this->map, this->map, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
@@ -175,6 +168,12 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     this->lastFrame = newFrame;
 
     cv::imwrite("stitchres/"+std::to_string(frame_counter)+"result.jpeg",this->map);
+
+    size_t mapSize = this->map.total() * this->map.elemSize();
+    double mapMegabytes = mapSize / (1024.0 * 1024.0);
+
+    std::cout << "Map MB: "<< mapMegabytes << std::endl;
+    
 
     std::cout << "STITCH STOP" << std::endl;
 }
