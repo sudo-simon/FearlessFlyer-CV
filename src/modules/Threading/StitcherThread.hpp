@@ -13,8 +13,8 @@ class StitcherThread {
         StateBoard* termSig_ptr;
         cv::Mat map;
         cv::Mat lastFrame;
-        double last_dx;
-        double last_dy;
+        double global_dx = 0;
+        double global_dy = 0;
         int frame_counter;
 
 

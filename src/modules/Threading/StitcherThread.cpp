@@ -14,6 +14,7 @@
 #include <opencv2/core/matx.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <ostream>
 #include <string>
@@ -57,13 +58,14 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     if(lastFrame.empty()){
         lastFrame = newFrame;
-        this->map = lastFrame;
+        this->map = newFrame;
         return;
     }
 
     cv::Ptr<cv::ORB> detector = cv::ORB::create();
     std::vector<cv::KeyPoint> keypoints1, keypoints2;
     cv::Mat descriptor1, descriptor2;
+    
 
     detector->detectAndCompute(lastFrame, cv::noArray(), keypoints1, descriptor1);
     detector->detectAndCompute(newFrame, cv::noArray(), keypoints2, descriptor2);
@@ -98,70 +100,62 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     double dx = -H.at<double>(0, 2);
     double dy = H.at<double>(1, 2);
 
+    std::cout << "-----" <<std::endl;
+    std::cout << dy << std::endl;
+    std::cout << dx << std::endl;
+
     double bordDx = dx;
     double bordDy = dy;
 
-    if(frame_counter==0){
-        this->last_dx = dx;
-        this->last_dy = dy;
-    } else {
-        dx += last_dx;
-        dy += last_dy;
-        this->last_dx = dx;
-        this->last_dy = dy;
-    }
-
-    /* BLENDING sembra funzionare, da correggere xError e yError*/
-    /* START OFFSET */
-    
-    int x_offset = 0;
-    int y_offset = 0;
-
-    if(dx<0){
-        x_offset = 0;
+    if(global_dx+dx<0){
+        global_dx = 0;
     }else{
-        x_offset = (int) std::round(std::abs(dx));
+        global_dx += (int) std::round(dx);
     }
 
-    if(dy>0){
-        y_offset = 0;
+    if(global_dy+dy>0){
+        global_dy = 0;
     }else{
-        y_offset = (int) std::round(std::abs(dy));
+        global_dy += (int) std::round(dy);
     }
+
+    std::cout << global_dy << std::endl;
+    std::cout << global_dx << std::endl;
+    std::cout << "-----" <<std::endl;
 
     int bottom = 0, left = 0, right = 0, top = 0;
 
     if (bordDy > 0) {
-        top = std::ceil(bordDy);
+        top = std::round(bordDy);
         bottom = 0;
     } else {
         top = 0;
-        bottom = std::ceil(std::abs(bordDy));
+        bottom = std::round(std::abs(bordDy));
     }
 
     if (bordDx > 0) {
         left = 0;
-        right = std::ceil(bordDx);
+        right = std::round(bordDx);
     } else {
-        left = std::ceil(std::abs(bordDx));
+        left = std::round(std::abs(bordDx));
         right = 0;
     }
 
     /* END OFFSET */
     cv::copyMakeBorder(this->map, this->map, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
-    int yError = imgWarped.rows - lastFrame.rows;
-    int xError = imgWarped.cols - lastFrame.cols;
+    int x_off = abs(global_dx);
+    int y_off = abs(global_dy);
 
-    for (int i = y_offset; i < imgWarped.rows + y_offset - yError; i++) {
-        for (int j = x_offset; j < imgWarped.cols + x_offset - xError; j++) {
+    for (int i = y_off; i < imgWarped.rows + y_off; i++) {
+        for (int j = x_off; j < imgWarped.cols + x_off; j++) {
 
-            if (imgWarped.at<cv::Vec4b>(i - y_offset, j - x_offset)[3] < 255) {
+            if (imgWarped.at<cv::Vec4b>(i - y_off, j - x_off)[3] < 255) {
                 continue;
             }
-            
-            
-            this->map.at<cv::Vec4b>(i,j) = imgWarped.at<cv::Vec4b>(i-y_offset, j-x_offset);
+
+
+            this->map.at<cv::Vec4b>(i,j) = imgWarped.at<cv::Vec4b>(i-y_off, j-x_off);
         }
     }
 
@@ -180,7 +174,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
 
 inline void StitcherThread::MapBufferUpdate(){
-    this->mapBuffer_ptr->put(this->map);
+    //this->mapBuffer_ptr->put(this->map);
 }
 
 cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat transformationMatrix) {

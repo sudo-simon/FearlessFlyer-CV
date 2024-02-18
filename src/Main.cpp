@@ -74,7 +74,7 @@ int main() {
         {
             //handler.MapWindow();
             handler.SettingsWindow();
-            handler.CaptureWindow();
+            //handler.CaptureWindow();
         }
 
         //WINDOWS
