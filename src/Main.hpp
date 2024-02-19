@@ -50,18 +50,30 @@ class WindowsHandler{
 
         Console myConsole;
         GLFWwindow* window;
+        inline static GLuint liveCachedTexture = 0;
+        inline static GLuint mapCachedTexture = 0;
 
 
-        static void ImageViewer(cv::Mat& image)
+        static void ImageViewer(cv::Mat& image, int mod)
         {
-            GLuint texture;
-            glGenTextures( 1, &texture );
-            glBindTexture( GL_TEXTURE_2D, texture );
+
+            GLuint* cachedTexture;
+            if(mod == 0){
+                cachedTexture = &liveCachedTexture;
+            } else {
+                cachedTexture = &mapCachedTexture;
+            }
+
+            if (cachedTexture != 0) {
+                glDeleteTextures(1, cachedTexture);
+            }
+            glGenTextures( 1, cachedTexture );
+            glBindTexture( GL_TEXTURE_2D, *cachedTexture );
             glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
             glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
             glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
             glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, image.cols, image.rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data );
-            ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( texture ) ), ImVec2( image.cols, image.rows ) );
+            ImGui::Image( reinterpret_cast<void*>( static_cast<intptr_t>( *cachedTexture ) ), ImVec2( image.cols, image.rows ) );
         }
 
     public:
@@ -115,8 +127,11 @@ class WindowsHandler{
 
         void CaptureWindow()
         {
-            ImGui::Begin("Live");    
-            WindowsHandler::ImageViewer(frame);
+            ImGui::Begin("Live");   
+            if(fifo_buffer_cap.changed){
+                fifo_buffer_cap.take(frame); 
+            }
+            WindowsHandler::ImageViewer(frame, 0);
             ImGui::End();
         }
 
@@ -131,7 +146,7 @@ class WindowsHandler{
             ImGui::SetNextWindowSize(viewport->Size);
             ImGui::SetNextWindowPos(viewport->Pos);
             ImGui::Begin("Map Viewer", NULL, window_flags);    
-            WindowsHandler::ImageViewer(map);
+            WindowsHandler::ImageViewer(map, 1);
             ImGui::End();
         }
 
@@ -184,13 +199,6 @@ class WindowsHandler{
                         Console::Log("Error: Can't start capturing, the server is off");
                     }
                 }
-            }
-
-            //? RENDERING OF THE FRAME TAKEN FROM THE FIFOBUFFER
-            if(checks.isCapturing && checks.serverOn){
-                fifo_buffer_cap.take(frame);
-                ImGui::SameLine();                            
-                ImGui::Text("Capturing frames.");
             }
 
             if(checks.errorCapturing){

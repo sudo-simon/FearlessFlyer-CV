@@ -18,7 +18,11 @@ class BlockingQueue
 
     public:
 
-        bool changed;
+        bool changed = false;
+
+        unsigned int size(){
+            return private_std_queue.size();
+        }
 
         void put(T new_value) {
             std::unique_lock<std::mutex> lk(mut);

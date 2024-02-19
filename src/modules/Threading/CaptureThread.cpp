@@ -58,8 +58,8 @@ void CaptureThread::Start(){
         cap >> frame;
         if (frame.empty()) continue;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-        //this->toMain_buffer_ptr->put(frame);
-
+        this->toMain_buffer_ptr->put(frame);
+        
         if(framesCounter == 15){
             this->toStitch_buffer_ptr->put(frame);
 
@@ -67,6 +67,7 @@ void CaptureThread::Start(){
         } else {
             framesCounter++;
         }
+        
 
         // Uncomment this operation only if you are using a video test
         std::this_thread::sleep_for(0.02s);

@@ -66,15 +66,14 @@ int main() {
     {
         glfwPollEvents();
 
-        // Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
         {
-            //handler.MapWindow();
+            handler.MapWindow();
             handler.SettingsWindow();
-            //handler.CaptureWindow();
+            handler.CaptureWindow();
         }
 
         //WINDOWS

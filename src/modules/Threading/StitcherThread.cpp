@@ -54,7 +54,7 @@ void StitcherThread::InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, Blocki
 
 void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
-    std::cout << "STITCH START" << std::endl;
+    std::chrono::milliseconds startTime = duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
 
     if(lastFrame.empty()){
         lastFrame = newFrame;
@@ -100,10 +100,6 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     double dx = -H.at<double>(0, 2);
     double dy = H.at<double>(1, 2);
 
-    std::cout << "-----" <<std::endl;
-    std::cout << dy << std::endl;
-    std::cout << dx << std::endl;
-
     double bordDx = dx;
     double bordDy = dy;
 
@@ -118,10 +114,6 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     }else{
         global_dy += (int) std::round(dy);
     }
-
-    std::cout << global_dy << std::endl;
-    std::cout << global_dx << std::endl;
-    std::cout << "-----" <<std::endl;
 
     int bottom = 0, left = 0, right = 0, top = 0;
 
@@ -165,16 +157,14 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     size_t mapSize = this->map.total() * this->map.elemSize();
     double mapMegabytes = mapSize / (1024.0 * 1024.0);
-
-    std::cout << "Map MB: "<< mapMegabytes << std::endl;
-    
-
-    std::cout << "STITCH STOP" << std::endl;
+    std::chrono::milliseconds endTime = duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
+    double time = endTime.count()-startTime.count();
+    std::cout << "Stitching done. Map MB: "<< mapMegabytes << " Time: "<< time << "ms" << std::endl;
 }
 
 
 inline void StitcherThread::MapBufferUpdate(){
-    //this->mapBuffer_ptr->put(this->map);
+    this->mapBuffer_ptr->put(this->map);
 }
 
 cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat transformationMatrix) {
