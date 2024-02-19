@@ -11,6 +11,7 @@ class StitcherThread {
         BlockingQueue<cv::Mat>* fromCap_buffer_ptr;
         BlockingQueue<cv::Mat>* mapBuffer_ptr;
         StateBoard* termSig_ptr;
+    
         cv::Mat map;
         cv::Mat lastFrame;
         double global_dx = 0;

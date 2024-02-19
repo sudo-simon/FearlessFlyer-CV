@@ -6,6 +6,8 @@
 #include <buffers.hpp>
 #include <iostream>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/imgproc.hpp>
 #include <stdio.h>
 #include <thread>
 #include <opencv2/opencv.hpp>
@@ -127,10 +129,14 @@ class WindowsHandler{
 
         void CaptureWindow()
         {
-            ImGui::Begin("Live");   
             if(fifo_buffer_cap.changed){
                 fifo_buffer_cap.take(frame); 
+                ImVec2 capWindowSize = ImGui::GetWindowSize();
+                resizeWithRatio(frame, capWindowSize.y, capWindowSize.x);
             }
+
+            window_flags = ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar;
+            ImGui::Begin("Live");   
             WindowsHandler::ImageViewer(frame, 0);
             ImGui::End();
         }
@@ -139,6 +145,7 @@ class WindowsHandler{
         {
             if(mapBuffer.changed){
                 mapBuffer.take(map);
+                resizeWithRatio(map, 1080, 1920);
             }
 
             window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
@@ -230,6 +237,39 @@ class WindowsHandler{
 
             //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
+        }
+
+
+        void resizeWithRatio(cv::Mat& image, const int& height, const int& width){
+            int new_x;
+            int new_y;
+
+            int top = 0;
+            int bottom = 0;
+            int left = 0;
+            int right = 0;
+
+            //Con la mappa crasha
+
+            if(image.cols<image.rows){
+                double ratio =  (double) image.cols/image.rows;
+                new_y = height;
+                new_x = height*ratio;
+
+                top = (width - new_x)/2;
+                bottom = (width - new_x)/2;
+
+            } else {
+                double ratio =  (double) image.rows/image.cols;
+                new_x = width;
+                new_y = width*ratio;
+
+                top = (height - new_y)/2;
+                bottom = (height - new_y)/2;
+            }
+
+            cv::resize(image, image, cv::Size(new_x, new_y), cv::INTER_AREA);
+            cv::copyMakeBorder(image, image, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
         }
 
 };

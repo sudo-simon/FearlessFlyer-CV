@@ -81,7 +81,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     });
 
     // Matcher treshold 0.1 and RANSAC treshold 3.0 seems the best choice
-    int numGoodMatches = (int) (matches.size() * 0.7);
+    int numGoodMatches = (int) (matches.size()) * 0.5;
     matches.resize(numGoodMatches);
 
 
@@ -91,16 +91,14 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         points2.push_back(keypoints2[match.trainIdx].pt);
     }
 
-
     cv::Mat H = cv::findHomography(points1, points2,cv::RANSAC, 3.0);
-
 
     cv::Mat imgWarped = warpPerspectiveNoCut(newFrame, H);
 
     double dx = -H.at<double>(0, 2);
     double dy = H.at<double>(1, 2);
 
-    double bordDx = dx;
+    double bordDx = dx; 
     double bordDy = dy;
 
     if(global_dx+dx<0){
@@ -147,7 +145,24 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
             }
 
 
-            this->map.at<cv::Vec4b>(i,j) = imgWarped.at<cv::Vec4b>(i-y_off, j-x_off);
+            //Blending
+            float b = 1;
+            /*
+            if(this->map.at<cv::Vec4b>(i,j) != cv::Vec4b(0,0,0)) {
+                if(i-y_off < 100){
+                    b = ( (float) i-y_off) / 100; 
+                } else if (i-y_off > imgWarped.rows - 100){
+                    b = ( (float) abs((i-y_off)-imgWarped.rows)) / 100; 
+                } else if (j-x_off < 100) {
+                    b = ( (float) j-x_off) / 100;
+                } else if (j-x_off > imgWarped.cols - 100){
+                    b = ( (float) abs((j-x_off)-imgWarped.cols)) / 100;
+                }
+            }
+            */
+            
+            this->map.at<cv::Vec4b>(i,j) *= (1-b);
+            this->map.at<cv::Vec4b>(i,j) += imgWarped.at<cv::Vec4b>(i-y_off, j-x_off)*b;
         }
     }
 
@@ -161,7 +176,6 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     double time = endTime.count()-startTime.count();
     std::cout << "Stitching done. Map MB: "<< mapMegabytes << " Time: "<< time << "ms" << std::endl;
 }
-
 
 inline void StitcherThread::MapBufferUpdate(){
     this->mapBuffer_ptr->put(this->map);
@@ -200,7 +214,6 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat tr
     int dstWidth = static_cast<int>(maxX - minX);
     int dstHeight = static_cast<int>(maxY - minY);
 
-    
     float dataShift[9] = {1, 0, -minX, 0, 1, -minY, 0, 0, 1};
     cv::Mat shiftMatrix = cv::Mat(3, 3, CV_32F, dataShift); 
 
@@ -211,7 +224,6 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat tr
 
     cv::Mat dstImage;
     cv::warpPerspective(srcImage, dstImage, adjustedMatrix, cv::Size(dstWidth, dstHeight));
-
 
     return dstImage;
 }

@@ -15,7 +15,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     // Window and Graphics Context
-    GLFWwindow* window = glfwCreateWindow(1080, 720, "Fearless Flyer", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Fearless Flyer", nullptr, nullptr);
     if (window == nullptr){
         //Handling
     }

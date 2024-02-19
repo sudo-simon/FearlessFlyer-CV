@@ -58,12 +58,3 @@ target_link_libraries(FF-CV OpenGL::GL)
 target_link_libraries(FF-CV glfw)
 target_link_libraries(FF-CV imgui)
 target_link_libraries(FF-CV p2b)
-
-
-#~~~~~ Test binary
-add_executable(Test "${SRC_DIR}/Test.cpp" "${MOD_DIR}/Threading/CaptureThread.cpp")
-target_link_libraries(Test ${OpenCV_LIBS})
-target_link_libraries(Test OpenGL::GL)
-target_link_libraries(Test glfw)
-target_link_libraries(Test imgui)
-target_link_libraries(Test p2b)
