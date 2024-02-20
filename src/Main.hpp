@@ -95,9 +95,6 @@ class WindowsHandler{
             network.BindRtmpLink();
 
             bg_color = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
-
-            //fifo_buffer_cap = FIFOBuffer<cv::Mat>(8);
-            //fifo_buffer_sti =  BlockingQueue<cv::Mat>();
             this->stitcher.InitializeStitcher(&fifo_buffer_sti, &mapBuffer, &termSig);
             this->capturer.InitializeCapturer(network.GetExternalRtmpLink(), &fifo_buffer_cap, &fifo_buffer_sti, &termSig);
 
@@ -144,7 +141,6 @@ class WindowsHandler{
         {
             if(mapBuffer.changed){
                 mapBuffer.take(map);
-                resizeWithRatio(map, 1080*0.85, 1920*0.85);
             }
 
             window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;

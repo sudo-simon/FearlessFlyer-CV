@@ -10,6 +10,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
+#include "modules/Canvas/Canvas.hpp" 
 #include <omp.h>
 
 #include <opencv2/core/matx.hpp>
@@ -27,16 +28,17 @@ void StitcherThread::Start(){
     cv::Mat frame;
     std::cout << "---- STITCHER THREAD STARTED ----" << std::endl;
 
-    frame_counter = 0;
+    this->fromCap_buffer_ptr->take(frame);
+
+    Canvas canvas(1920,1080, frame.cols, frame.rows, this->mapBuffer_ptr);
 
     bool isTerminated = false;
     while(!isTerminated){
+
+        canvas.stitchFrame(frame);
+
         this->fromCap_buffer_ptr->take(frame);
-        StitchingRoutine(frame);
-        if(!frame.empty()){
-            MapBufferUpdate();
-            frame_counter+=1;
-        }
+
         this->termSig_ptr->read(isTerminated);
     }
 
@@ -53,6 +55,11 @@ void StitcherThread::InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, Blocki
     this->termSig_ptr = termSig;
 }
 
+
+
+// OLD STITCHING ROUTINE
+
+/*
 void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     std::chrono::milliseconds startTime = duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
@@ -131,7 +138,6 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
         right = 0;
     }
 
-    /* END OFFSET */
     cv::copyMakeBorder(this->map, this->map, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
     int x_off = abs(round(global_dx));
@@ -158,7 +164,7 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
 
     this->lastFrame = newFrame;
 
-    cv::imwrite("stitchres/"+std::to_string(frame_counter)+"result.jpeg",this->map);
+    //cv::imwrite("stitchres/"+"result.jpeg",this->map);
 
     size_t mapSize = this->map.total() * this->map.elemSize();
     double mapMegabytes = mapSize / (1024.0 * 1024.0);
@@ -217,3 +223,4 @@ cv::Mat StitcherThread::warpPerspectiveNoCut(const cv::Mat& srcImage, cv::Mat tr
 
     return dstImage;
 }
+*/

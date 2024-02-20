@@ -16,7 +16,6 @@ class StitcherThread {
         cv::Mat lastFrame;
         double global_dx = 0;
         double global_dy = 0;
-        int frame_counter;
 
 
         void StitchingRoutine(cv::Mat& newFrame);
