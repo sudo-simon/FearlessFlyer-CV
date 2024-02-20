@@ -10,6 +10,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
+#include <omp.h>
 
 #include <opencv2/core/matx.hpp>
 #include <opencv2/core/types.hpp>
@@ -81,9 +82,8 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     });
 
     // Matcher treshold 0.1 and RANSAC treshold 3.0 seems the best choice
-    int numGoodMatches = (int) (matches.size()) * 0.5;
+    int numGoodMatches = (int) (matches.size()) * 0.75;
     matches.resize(numGoodMatches);
-
 
     std::vector<cv::Point2f> points1, points2;
     for (const auto& match : matches) {
@@ -104,13 +104,13 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     if(global_dx+dx<0){
         global_dx = 0;
     }else{
-        global_dx += (int) std::round(dx);
+        global_dx += dx;
     }
 
     if(global_dy+dy>0){
         global_dy = 0;
     }else{
-        global_dy += (int) std::round(dy);
+        global_dy += dy;
     }
 
     int bottom = 0, left = 0, right = 0, top = 0;
@@ -134,35 +134,25 @@ void StitcherThread::StitchingRoutine(cv::Mat& newFrame){
     /* END OFFSET */
     cv::copyMakeBorder(this->map, this->map, top, bottom, left, right, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
-    int x_off = abs(global_dx);
-    int y_off = abs(global_dy);
+    int x_off = abs(round(global_dx));
+    int y_off = abs(round(global_dy));
 
+
+    //Parallelizae
+
+    
+    #pragma omp parallel for
     for (int i = y_off; i < imgWarped.rows + y_off; i++) {
+        #pragma omp parallel for
         for (int j = x_off; j < imgWarped.cols + x_off; j++) {
 
-            if (imgWarped.at<cv::Vec4b>(i - y_off, j - x_off)[3] < 255) {
-                continue;
-            }
-
-
-            //Blending
-            float b = 1;
-            /*
-            if(this->map.at<cv::Vec4b>(i,j) != cv::Vec4b(0,0,0)) {
-                if(i-y_off < 100){
-                    b = ( (float) i-y_off) / 100; 
-                } else if (i-y_off > imgWarped.rows - 100){
-                    b = ( (float) abs((i-y_off)-imgWarped.rows)) / 100; 
-                } else if (j-x_off < 100) {
-                    b = ( (float) j-x_off) / 100;
-                } else if (j-x_off > imgWarped.cols - 100){
-                    b = ( (float) abs((j-x_off)-imgWarped.cols)) / 100;
+            if(j<this->map.cols && i <this->map.rows){
+                if (imgWarped.at<cv::Vec4b>(i - y_off, j - x_off)[3] < 255) {
+                    continue;
                 }
+
+                this->map.at<cv::Vec4b>(i,j) = imgWarped.at<cv::Vec4b>(i-y_off, j-x_off);   
             }
-            */
-            
-            this->map.at<cv::Vec4b>(i,j) *= (1-b);
-            this->map.at<cv::Vec4b>(i,j) += imgWarped.at<cv::Vec4b>(i-y_off, j-x_off)*b;
         }
     }
 

@@ -242,7 +242,8 @@ class WindowsHandler{
                 checks.serverOn  = false;
             }
 
-            ImGui::Dummy(ImVec2(0.0f, 20.0f));
+            ImGui::Dummy(
+                ImVec2(0.0f, 20.0f));
 
             ImGui::Checkbox("Console", &checks.show_console);
             ImGui::Checkbox("Stats", &checks.show_stats);

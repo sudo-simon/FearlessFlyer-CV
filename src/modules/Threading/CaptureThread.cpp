@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <iostream>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 
@@ -60,7 +61,7 @@ void CaptureThread::Start(){
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
         this->toMain_buffer_ptr->put(frame);
         
-        if(framesCounter == 10){
+        if(framesCounter == 20){
             this->toStitch_buffer_ptr->put(frame);
             framesCounter = 0;
         } else {
@@ -70,9 +71,7 @@ void CaptureThread::Start(){
 
         // Uncomment this operation only if you are using a video test
         std::this_thread::sleep_for(0.02s);
-
         this->termSig_ptr->read(isTerminated);
-
     }
     cout << "---- CAPTURE THREAD STOPPED ----" << endl;
 }
