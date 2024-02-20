@@ -15,11 +15,14 @@
 
 //? AUX function to check if all pixel values are empty
 bool isPixelEmpty(cv::Vec4b& pixel){
-    return (
-        (pixel[0] == 0) &&
-        (pixel[1] == 0) &&
-        (pixel[2] == 0)
-    );
+    
+    //return (
+    //    (pixel[0] == 0) &&
+    //    (pixel[1] == 0) &&
+    //    (pixel[2] == 0)
+    //);
+    
+    return (pixel[3] < 255);
 }
 
 
