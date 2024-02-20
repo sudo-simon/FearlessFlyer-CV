@@ -3,99 +3,34 @@
 #include "libs/buffers.hpp"
 #include "modules/Network/NetConf.hpp"
 #include "modules/BlockingQueue.hpp"
+#include "modules/StateBoard.hpp"
 
-#include <boost/interprocess/creation_tags.hpp>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
 #include <opencv4/opencv2/core/mat.hpp>
 #include <p2b/bitmap.hpp>
 #include <string>
 
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
 #include <sys/types.h>
 
 
 using namespace std;
-using namespace boost::interprocess;
-
-
-/*
-    Struct used to pass the frame to the shared memory
-    - int rows
-    - int cols
-    - int add_direction
-*/
-typedef struct ShmemFrameMessage{
-    int add_direction;
-} ShmemFrameMessage;
-
-
-/*
-    Returns true if the last byte of the ptr is not 0.
-    Last byte of shared memory is used as a syncronization byte.
-*/
-bool isShmemFull(uint8_t* shmem_ptr, const long shmem_size);
-
-/*
-    Returns true if all bytes are set to 0
-*/
-bool isShmemEmpty(uint8_t* shmem_ptr, const long shmem_size);
-
-/*
-    Sets the firts byte to 255 to notify thread exit
-*/
-void notifyThreadExit(uint8_t* shmem_ptr);
-
 
 
 class CaptureThread {
 
     private:
         string RTMP_address;
-        FIFOBuffer<cv::Mat>* fifo_buffer_ptr;
-
-        FIFOBuffer<struct ShmemFrameMessage> msg_buffer;
-
-        const char* shmem_name;
-        size_t shmem_size;
-        int shmem_n_frames;
-        int frame_height;
-        int frame_width;
-
-        shared_memory_object shmem;
-        mapped_region mem_region;
-        uint8_t* shmem_ptr;
+        BlockingQueue<cv::Mat>* toMain_buffer_ptr;
+        BlockingQueue<cv::Mat>* toStitch_buffer_ptr;
+        StateBoard* termSig_ptr;
 
     public:
 
-        /*
-            Constructor
-        */
-        CaptureThread(std::string RTMP_addr, FIFOBuffer<cv::Mat>* fifo_buffer_ptr);
+        CaptureThread() {}
+        ~CaptureThread() {}
+        void InitializeCapturer(std::string RTMP_addr, BlockingQueue<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr, StateBoard* termSig);
 
-        
-        CaptureThread(
-            const long initial_buffer_capacity, 
-            const char* shmem_name, 
-            const size_t shmem_size,
-            const int shmem_n_frames,
-            const int frame_height,
-            const int frame_width
-        );
-        
-        /*
-            Deconstructor
-        */
-        ~CaptureThread();
+        void Start();
 
-        /*
-            Thread start method
-        */
-        void start_v1();
-
-        void start_v2();
+        void Terminate();
 
 };
