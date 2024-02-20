@@ -10,19 +10,20 @@
 #include <opencv2/core/matx.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-//? AUX function to check if all pixel values are empty
+//? AUX functions to check pixel values
 bool isPixelEmpty(cv::Vec4b& pixel){
-    
-    //return (
-    //    (pixel[0] == 0) &&
-    //    (pixel[1] == 0) &&
-    //    (pixel[2] == 0)
-    //);
-    
     return (pixel[3] < 255);
+}
+bool isPixelBlack(cv::Vec4b& pixel){
+    return (
+        (pixel[0] == 0) &&
+        (pixel[1] == 0) &&
+        (pixel[2] == 0)
+    );
 }
 
 
@@ -72,7 +73,7 @@ void Canvas::stitch() {
     std::sort(matches.begin(), matches.end());
 
     // Keep the top N matches (e.g., 50)
-    int numMatchesToKeep = (int) (matches.size() * threshOrb);
+    int numMatchesToKeep = (int) (matches.size() * this->threshOrb);
     matches.resize(numMatchesToKeep);
 
     // Find homography matrix using RANSAC
@@ -82,7 +83,7 @@ void Canvas::stitch() {
         points2.push_back(keypoints2[match.trainIdx].pt);
     }
 
-    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, threshRansac);
+    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, this->threshRansac);
     long x = (long) std::round(-H.at<double>(0, 2));
     long y = (long) std::round(-H.at<double>(1, 2));
     //std::cout << "[STITCH] x = "<<x<<", y = "<<y<< std::endl;
@@ -109,25 +110,16 @@ void Canvas::stitch() {
     long horiz_region = this->canvas_w - this->window_x;
     long vert_region = this->canvas_h - this->window_y;
 
-    /*
-    std::cout <<
-        "warped.cols = "<<warpedImage.cols <<"\n"<<
-        "warped.rows = "<<warpedImage.rows <<"\n"<<
-        "region w = "<< horiz_region <<"\n"<<
-        "region h = "<< vert_region <<"\n"<<
-    std::endl;
-    */
-
     warpedImage.forEach<cv::Vec4b>(
         [this,horiz_region,vert_region](cv::Vec4b& pixel, const int* position) -> void {
             int i = position[0];
             int j = position[1];
             if (!isPixelEmpty(pixel) && i<vert_region && j<horiz_region) {
                 this->canvas(cv::Rect(
-                this->window_x,
-                this->window_y,
-                horiz_region,
-                vert_region
+                    this->window_x,
+                    this->window_y,
+                    horiz_region,
+                    vert_region
                 )).at<cv::Vec4b>(i,j) = pixel;
             }
         }
@@ -176,13 +168,9 @@ Canvas::Canvas(long display_w, long display_h, long window_w, long window_h, Blo
 
 int Canvas::stitchFrame(cv::Mat newFrame) {
 
-
     this->next_frame = newFrame;
-
     this->stitch();
-    
     this->updateDisplay();
-
     this->stitched_frames++;
 
     return 0;
@@ -201,7 +189,7 @@ cv::Mat Canvas::removeBlackBorders(cv::Mat& srcImg){
     bool changed_border = false;
     for (long j=srcImg.cols-1; j>0; --j){
         for (long i=0; i<srcImg.rows; ++i){
-            if (!isPixelEmpty(srcImg.at<cv::Vec4b>(i,j))){
+            if (!isPixelBlack(srcImg.at<cv::Vec4b>(i,j))){
                 new_right_border = j+1;
                 changed_border = true;
                 break;
@@ -213,7 +201,7 @@ cv::Mat Canvas::removeBlackBorders(cv::Mat& srcImg){
     changed_border = false;
     for (long j=0; j<srcImg.cols; ++j){
         for (long i=0; i<srcImg.rows; ++i){
-            if (!isPixelEmpty(srcImg.at<cv::Vec4b>(i,j))){
+            if (!isPixelBlack(srcImg.at<cv::Vec4b>(i,j))){
                 new_left_border = j;
                 changed_border = true;
                 break;
@@ -225,7 +213,7 @@ cv::Mat Canvas::removeBlackBorders(cv::Mat& srcImg){
     changed_border = false;
     for (long i=srcImg.rows-1; i>0; --i){
         for (long j=0; j<srcImg.cols; ++j){
-            if (!isPixelEmpty(srcImg.at<cv::Vec4b>(i,j))){
+            if (!isPixelBlack(srcImg.at<cv::Vec4b>(i,j))){
                 new_bottom_border = i+1;
                 changed_border = true;
                 break;
@@ -237,7 +225,7 @@ cv::Mat Canvas::removeBlackBorders(cv::Mat& srcImg){
     changed_border = false;
     for (long i=0; i<srcImg.rows; ++i){
         for (long j=0; j<srcImg.cols; ++j){
-            if (!isPixelEmpty(srcImg.at<cv::Vec4b>(i,j))){
+            if (!isPixelBlack(srcImg.at<cv::Vec4b>(i,j))){
                 new_top_border = i;
                 changed_border = true;
                 break;
@@ -261,34 +249,49 @@ cv::Mat Canvas::removeBlackBorders(cv::Mat& srcImg){
 
 int Canvas::moveWindow(long x, long y, long newImage_cols, long newImage_rows) {
 
-    long left_border = ((x < 0) ? (-x) : 0);    //? Moving LEFT
-    long right_border = ((x > 0) ? x : 0);      //? Moving RIGHT
-    long top_border = ((y < 0) ? (-y) : 0);     //? Moving UP
-    long bottom_border = ((y > 0) ? y : 0);     //? Moving DOWN
+    //std::cout<< left_border<<", "<<right_border<<", "<<top_border<<", "<<bottom_border <<std::endl;
+    /**/
 
-    /*
-    long future_x = this->window_x + x + left_border;
-    long future_y = this->window_y + y + top_border;
-    long future_w = this->window_w + left_border + right_border;
-    long future_h = this->window_h + top_border + bottom_border;
+    //long left_border = ((x < 0) ? (-x) : 0);    //? Moving LEFT
+    //long right_border = ((x > 0) ? x : 0);      //? Moving RIGHT
+    //long top_border = ((y < 0) ? (-y) : 0);     //? Moving UP
+    //long bottom_border = ((y > 0) ? y : 0);     //? Moving DOWN
 
-    long horiz_space = future_w - future_x;
-    long vert_space = future_h - future_y;
+    /*/? Little piece of code to compensate for a bigger image to stitch
+    //long future_x = this->window_x + x + left_border;
+    //long future_y = this->window_y + y + top_border;
+    //long future_w = this->window_w + left_border + right_border;
+    //long future_h = this->window_h + top_border + bottom_border;
 
-    if (horiz_space < newImage_cols){
-        right_border += 50;
+    long horiz_diff = newImage_cols - ((this->window_w + left_border + right_border) - (this->window_x + x + left_border));
+    long vert_diff = newImage_rows - ((this->window_h + top_border + bottom_border) - (this->window_y + y + top_border));
+    if (horiz_diff > 0){
+        if (x < 0) left_border += horiz_diff;
+        else right_border += horiz_diff;
     }
-    if (vert_space < newImage_rows){
-        bottom_border += 50;
+    if (vert_diff > 0){
+        if (y < 0) top_border += vert_diff;
+        else bottom_border += vert_diff;
     }
     */
 
-    if (top_border != 0 || bottom_border != 0 || left_border != 0 || right_border != 0){
-        //std::cout << "[moveWindow] Calling resizeCanvas" << std::endl;
-        if (this->resizeCanvas(top_border, bottom_border, left_border, right_border) != 0){
-            return -1;
-        }
-    }
+    //? This version of the mover adds ONLY the needed borders
+    long left_border = 0;
+    long right_border = 0;
+    long top_border = 0;
+    long bottom_border = 0;
+
+    if (x < 0 && (this->window_x+x) < 0)
+        left_border = -(this->window_x+x);
+    else if (x > 0 && (this->window_x+x+this->window_w) > this->canvas_w)
+        right_border = (this->window_x+x+this->window_w)-this->canvas_w;
+    if (y < 0 && (this->window_y+y) < 0)
+        top_border = -(this->window_y+y);
+    else if (y > 0 && (this->window_y+y+this->window_h) > this->canvas_h)
+        bottom_border = (this->window_y+y+this->window_h)-this->canvas_h;
+
+    //!if (top_border != 0 || bottom_border != 0 || left_border != 0 || right_border != 0)
+    this->resizeCanvas(top_border, bottom_border, left_border, right_border);
 
     this->window_x += x;
     this->window_y += y;
@@ -299,19 +302,10 @@ int Canvas::moveWindow(long x, long y, long newImage_cols, long newImage_rows) {
 
 
 int Canvas::resizeCanvas(long top_border, long bottom_border, long left_border, long right_border) {
-    if (top_border < 0 || bottom_border < 0 || left_border < 0 || right_border < 0){
-        std::cerr << "[ERROR] New canvas border sizes can't be negative" << std::endl;
-        return -1;
-    }
-
-    /*
-    std::cout <<
-        "[DEBUG - resizeCanvas] top_border = "<<top_border <<"\n"<<
-        "[DEBUG - resizeCanvas] bottom_border = "<<bottom_border <<"\n"<<
-        "[DEBUG - resizeCanvas] left_border = "<<left_border <<"\n"<<
-        "[DEBUG - resizeCanvas] right_border = "<<right_border <<"\n"<<
-    std::endl;
-    */
+    //!if (top_border < 0 || bottom_border < 0 || left_border < 0 || right_border < 0){
+    //!    std::cerr << "[ERROR] New canvas border sizes can't be negative" << std::endl;
+    //!    return -1;
+    //!}
 
     cv::copyMakeBorder(
         this->canvas, 
@@ -343,7 +337,6 @@ void resizeWithRatio(cv::Mat& image, const int& height, const int& width){
     int bottom = 0;
     int left = 0;
     int right = 0;
-
     
     double ratio = 0;
 
@@ -395,16 +388,21 @@ void Canvas::updateDisplay() {
 
     cv::Mat tmp_display = this->removeBlackBorders(this->canvas);
 
-    cv::imwrite("result.jpeg", tmp_display);
+    //! Slows down the execution a lot if done here
+    //cv::imwrite("result.jpeg", tmp_display);
 
     resizeWithRatio(tmp_display, this->display_h*0.85, this->display_w*0.85);
 
-    this->display = tmp_display.clone();
+    this->display = tmp_display;
 
     this->mapBuffer->put(this->display);
     
     return;
 
+}
+
+void Canvas::exportCanvas(std::string filename){
+    cv::imwrite(filename, this->removeBlackBorders(this->canvas));
 }
 
 

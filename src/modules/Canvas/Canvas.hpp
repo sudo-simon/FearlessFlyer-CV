@@ -54,6 +54,8 @@ class Canvas {
 
         void updateDisplay();
 
+        void exportCanvas(std::string filename);
+
         void stitch();
         
 
