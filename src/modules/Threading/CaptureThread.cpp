@@ -74,7 +74,5 @@ void CaptureThread::Start(){
         this->termSig_ptr->read(isTerminated);
 
     }
-
-    this->toStitch_buffer_ptr->put(frame);
     cout << "---- CAPTURE THREAD STOPPED ----" << endl;
 }

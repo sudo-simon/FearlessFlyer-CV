@@ -70,23 +70,20 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+
         {
             handler.MapWindow();
             handler.SettingsWindow();
             handler.CaptureWindow();
-        }
 
-        //WINDOWS
-        if(handler.checks.show_console){
-            handler.ShowConsole();
-        }
+            if(handler.checks.show_console){
+                handler.ShowConsole();
+            }
 
-
-        if(handler.checks.show_help_window)
-        {
-            ImGui::ShowDemoWindow(&handler.checks.show_demo_window);
+            if(handler.checks.show_stats){
+                handler.StatsWindows();
+            }
         }
-        // WINDOWS
 
         // RENDERING
         ImGui::Render();

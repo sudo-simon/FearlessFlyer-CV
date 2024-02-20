@@ -23,9 +23,8 @@
 #include "modules/Threading/CaptureThread.hpp"
 
 struct WindowsCheck{
-    bool show_demo_window = false;
-    bool show_help_window = false;
     bool show_console = false;
+    bool show_stats = false;
     bool serverOn = false;
     bool isCapturing = false;
     bool errorCapturing = false;
@@ -120,6 +119,7 @@ class WindowsHandler{
 
         void ShowConsole()
         {
+            window_flags = ImGuiWindowFlags_NoDocking;
             ImGui::Begin("Console", NULL, window_flags);
             ImGui::Text("%s", myConsole.GetConsoleText().c_str());
             if(ImGui::Button("Clear"))
@@ -129,14 +129,13 @@ class WindowsHandler{
 
         void CaptureWindow()
         {
+            window_flags = ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoDocking;
+            ImGui::Begin("Live");   
             if(fifo_buffer_cap.changed){
                 fifo_buffer_cap.take(frame); 
                 ImVec2 capWindowSize = ImGui::GetWindowSize();
-                resizeWithRatio(frame, capWindowSize.y, capWindowSize.x);
+                resizeWithRatio(frame, capWindowSize.y-30, capWindowSize.x-30);
             }
-
-            window_flags = ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar;
-            ImGui::Begin("Live");   
             WindowsHandler::ImageViewer(frame, 0);
             ImGui::End();
         }
@@ -145,10 +144,10 @@ class WindowsHandler{
         {
             if(mapBuffer.changed){
                 mapBuffer.take(map);
-                resizeWithRatio(map, 1080, 1920);
+                resizeWithRatio(map, 1080*0.85, 1920*0.85);
             }
 
-            window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
+            window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
             const ImGuiViewport* viewport = ImGui::GetMainViewport();
             ImGui::SetNextWindowSize(viewport->Size);
             ImGui::SetNextWindowPos(viewport->Pos);
@@ -157,12 +156,20 @@ class WindowsHandler{
             ImGui::End();
         }
 
+        void StatsWindows(){
+            ImGui::Begin("Stats"); 
+            
+            ImGuiIO& io = ImGui::GetIO(); (void)io;
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+            ImGui::End();
+        }
+
+
         void SettingsWindow()
         {
 
             ImGui::Begin("Settings");            
-            ImGui::Checkbox("Console", &checks.show_console);
-            ImGui::Checkbox("Help", &checks.show_help_window);
 
             if (ImGui::Button("Start nginx server")){
                 if(!checks.serverOn){   
@@ -235,7 +242,11 @@ class WindowsHandler{
                 checks.serverOn  = false;
             }
 
-            //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
+
+            ImGui::Checkbox("Console", &checks.show_console);
+            ImGui::Checkbox("Stats", &checks.show_stats);
+
             ImGui::End();
         }
 
@@ -249,23 +260,47 @@ class WindowsHandler{
             int left = 0;
             int right = 0;
 
+            
+            double ratio = 0;
+
             //Con la mappa crasha
 
-            if(image.cols<image.rows){
-                double ratio =  (double) image.cols/image.rows;
-                new_y = height;
-                new_x = height*ratio;
+            if(image.cols>image.rows){
+                ratio = (double) image.rows/image.cols;
+            } else {
+                ratio = (double) image.cols/image.rows;
+            }
 
-                top = (width - new_x)/2;
-                bottom = (width - new_x)/2;
+            if(height<width){
+                new_y = height;
+                new_x = height/ratio;
+
+                if(new_x>width){
+                    new_x = width;
+                    new_y = width*ratio;
+
+                    top = (height - new_y)/2;
+                    bottom = (height - new_y)/2;
+
+                } else {
+                    left = (width - new_x)/2;
+                    right = (width - new_x)/2;
+                }
 
             } else {
-                double ratio =  (double) image.rows/image.cols;
                 new_x = width;
                 new_y = width*ratio;
 
-                top = (height - new_y)/2;
-                bottom = (height - new_y)/2;
+                if(new_y>height){
+                    new_y = height;
+                    new_x = height/ratio;
+
+                    left = (width - new_x)/2;
+                    right = (width - new_x)/2;
+                } else {
+                    top = (height - new_y)/2;
+                    bottom = (height - new_y)/2;
+                }   
             }
 
             cv::resize(image, image, cv::Size(new_x, new_y), cv::INTER_AREA);
