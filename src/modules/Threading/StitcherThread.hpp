@@ -14,8 +14,8 @@ class StitcherThread {
     
         cv::Mat map;
         cv::Mat lastFrame;
-        double global_dx = 0;
-        double global_dy = 0;
+        float threshOrb;
+        float threshRansac;
 
 
         void StitchingRoutine(cv::Mat& newFrame);
@@ -25,6 +25,9 @@ class StitcherThread {
     public:
         StitcherThread() {}
         ~StitcherThread() {}
+
+
+        inline void setTresholds(float& orb, float ransac) { this->threshOrb = orb; this->threshRansac = ransac;};
 
         void InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr, StateBoard* termSig);
         void Start();

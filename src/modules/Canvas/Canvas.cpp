@@ -72,7 +72,7 @@ void Canvas::stitch() {
     std::sort(matches.begin(), matches.end());
 
     // Keep the top N matches (e.g., 50)
-    int numMatchesToKeep = (int) (matches.size() * 0.75);
+    int numMatchesToKeep = (int) (matches.size() * threshOrb);
     matches.resize(numMatchesToKeep);
 
     // Find homography matrix using RANSAC
@@ -82,7 +82,7 @@ void Canvas::stitch() {
         points2.push_back(keypoints2[match.trainIdx].pt);
     }
 
-    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, 3.0);
+    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, threshRansac);
     long x = (long) std::round(-H.at<double>(0, 2));
     long y = (long) std::round(-H.at<double>(1, 2));
     //std::cout << "[STITCH] x = "<<x<<", y = "<<y<< std::endl;
@@ -138,16 +138,7 @@ void Canvas::stitch() {
 
 
 
-
-
-
-
-
-
-
-
-
-Canvas::Canvas(long display_w, long display_h, long window_w, long window_h, BlockingQueue<cv::Mat>* buffer){
+Canvas::Canvas(long display_w, long display_h, long window_w, long window_h, BlockingQueue<cv::Mat>* buffer, float tOrb, float tRansac){
     if (
         display_w < 0 ||
         display_h < 0 ||
@@ -173,6 +164,8 @@ Canvas::Canvas(long display_w, long display_h, long window_w, long window_h, Blo
     this->window_x = 0;
     this->window_y = 0;
 
+    this->threshOrb = tOrb;
+    this->threshRansac = tRansac;
 
     this->mapBuffer = buffer;
     this->stitched_frames = 0;

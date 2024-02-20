@@ -30,11 +30,14 @@ class Canvas {
         cv::Mat next_frame;
         long stitched_frames;
 
+        float threshOrb;
+        float threshRansac;
+
 
     
     public:
 
-        Canvas(long display_w, long display_h, long window_w, long window_h, BlockingQueue<cv::Mat>* buffer);
+        Canvas(long display_w, long display_h, long window_w, long window_h, BlockingQueue<cv::Mat>* buffer, float tOrb, float tRansac);
 
         inline cv::Mat* getDisplayPtr(){ return &this->display; }
         

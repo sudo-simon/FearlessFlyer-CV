@@ -42,6 +42,10 @@ class WindowsHandler{
         BlockingQueue<cv::Mat> mapBuffer;
         StateBoard termSig;
 
+        float threshRANSAC = 3.0;
+        float threshORB = 0.75;
+        int frameSpan = 20;
+
         CaptureThread capturer;
         StitcherThread stitcher;
         std::thread capturerThread;
@@ -51,6 +55,7 @@ class WindowsHandler{
 
         Console myConsole;
         GLFWwindow* window;
+
         inline static GLuint liveCachedTexture = 0;
         inline static GLuint mapCachedTexture = 0;
 
@@ -187,10 +192,41 @@ class WindowsHandler{
                 ImGui::Text("OFF");
             }
 
+             if(ImGui::Button("Stop nginx server")){
+                if(checks.serverOn){ 
+
+
+                    termSig.write(true);
+                    
+                    capturerThread.join();
+                    stitcherThread.join();
+
+                    network.ServerStop();
+
+                    myConsole.PrintUI("Server OFF");
+                    Console::Log("Server OFF - RTMP capture dismissed");
+
+                } else {   
+                    myConsole.PrintUI("Server already stopped.");
+                    Console::Log("Server already stopped.");
+                }
+                checks.isCapturing = false;
+                checks.serverOn  = false;
+            }
+    
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
+
+            ImGui::SliderFloat("ORB Threshold", &threshORB, 0.001, 1.000);
+            ImGui::SliderFloat("RANSAC Threshold", &threshRANSAC, 1.0, 10.00);
+            ImGui::SliderInt("Frame Span", &frameSpan, 5, 60);
+
             if(ImGui::Button("Start Capturing")){
                 if(checks.serverOn && !checks.isCapturing){
                     checks.isCapturing = true;
                     checks.errorCapturing = false; 
+
+                    stitcher.setTresholds(threshORB, threshRANSAC);
+                    capturer.setCountPicker(frameSpan);
                     
                     //? CAPTURE THREAD START
                     termSig.write(false);
@@ -216,30 +252,7 @@ class WindowsHandler{
                 ImGui::Text("Error");
             }
 
-            if(ImGui::Button("Stop nginx server")){
-                if(checks.serverOn){ 
-
-
-                    termSig.write(true);
-                    
-                    capturerThread.join();
-                    stitcherThread.join();
-
-                    network.ServerStop();
-
-                    myConsole.PrintUI("Server OFF");
-                    Console::Log("Server OFF - RTMP capture dismissed");
-
-                } else {   
-                    myConsole.PrintUI("Server already stopped.");
-                    Console::Log("Server already stopped.");
-                }
-                checks.isCapturing = false;
-                checks.serverOn  = false;
-            }
-
-            ImGui::Dummy(
-                ImVec2(0.0f, 20.0f));
+            ImGui::Dummy(ImVec2(0.0f, 20.0f));
 
             ImGui::Checkbox("Console", &checks.show_console);
             ImGui::Checkbox("Stats", &checks.show_stats);

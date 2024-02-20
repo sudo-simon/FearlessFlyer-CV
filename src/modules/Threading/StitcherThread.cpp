@@ -30,7 +30,7 @@ void StitcherThread::Start(){
 
     this->fromCap_buffer_ptr->take(frame);
 
-    Canvas canvas(1920,1080, frame.cols, frame.rows, this->mapBuffer_ptr);
+    Canvas canvas(1920,1080, frame.cols, frame.rows, this->mapBuffer_ptr, this->threshOrb, this->threshRansac);
 
     bool isTerminated = false;
     while(!isTerminated){

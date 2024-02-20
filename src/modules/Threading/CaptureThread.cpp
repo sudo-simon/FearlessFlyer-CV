@@ -61,7 +61,7 @@ void CaptureThread::Start(){
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
         this->toMain_buffer_ptr->put(frame);
         
-        if(framesCounter == 20){
+        if(framesCounter == this->countPicker){
             this->toStitch_buffer_ptr->put(frame);
             framesCounter = 0;
         } else {
