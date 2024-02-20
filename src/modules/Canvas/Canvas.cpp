@@ -401,8 +401,11 @@ void resizeWithRatio(cv::Mat& image, const int& height, const int& width){
 void Canvas::updateDisplay() {
 
     cv::Mat tmp_display = this->removeBlackBorders(this->canvas);
-    resizeWithRatio(tmp_display, this->display_h, this->display_w);
-    //this->display.setTo(cv::Scalar(0,0,0,0));
+
+    cv::imwrite("result.jpeg", tmp_display);
+
+    resizeWithRatio(tmp_display, this->display_h*0.85, this->display_w*0.85);
+
     this->display = tmp_display.clone();
 
     this->mapBuffer->put(this->display);

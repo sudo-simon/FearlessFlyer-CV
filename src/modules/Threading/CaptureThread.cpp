@@ -45,7 +45,7 @@ void CaptureThread::Start(){
     cv::Mat frame;
 
     //cv::VideoCapture cap(this->RTMP_address);
-    cv::VideoCapture cap("../../DJI_001.mp4");
+    cv::VideoCapture cap("videoTest/DJI_0152.mp4");
 
     if(!cap.isOpened()){
         Console::LogError("VideoCapture() failed");
