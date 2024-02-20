@@ -141,19 +141,9 @@ template <typename T> FIFOBuffer<T>::~FIFOBuffer() {
 
 
 
-
-
 template <typename T> long FIFOBuffer<T>::getSize() { return this->size; }
 
 template <typename T> long FIFOBuffer<T>::getCapacity() { return this->capacity; }
-
-/*
-  Function used only during debug that does not follow the FIFO principle,
-  use is deprecated
-*/
-template <typename T> T FIFOBuffer<T>::at(long index) { return this->buffer[index]; }
-
-
 
 
 
@@ -220,11 +210,9 @@ template <typename T> LIFOBuffer<T>::~LIFOBuffer() { this->buffer.clear(); }
 
 
 
-
 template <typename T> long LIFOBuffer<T>::getSize() { return this->size; }
 
 template <typename T> long LIFOBuffer<T>::getCapacity() { return this->capacity; }
-
 
 
 
