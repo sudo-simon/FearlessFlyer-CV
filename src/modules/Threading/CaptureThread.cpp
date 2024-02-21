@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <iostream>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 
@@ -29,7 +30,7 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 }
 // ----------------------------------------------------------------
 
-void CaptureThread::InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr,  StateBoard* termSig){
+void CaptureThread::InitializeCapturer(std::string RTMP_addr, BlockingQueue<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr,  StateBoard* termSig){
     this->RTMP_address = RTMP_addr;
     this->toMain_buffer_ptr = main_buffer_ptr;
     this->toStitch_buffer_ptr = stitch_buffer_ptr;
@@ -42,8 +43,9 @@ void CaptureThread::Start(){
     cout << "---- CAPTURE THREAD STARTED ----" << endl;
 
     cv::Mat frame;
-    cv::VideoCapture cap(0);
+
     //cv::VideoCapture cap(this->RTMP_address);
+    cv::VideoCapture cap("videoTest/DJI_0148.mp4");
 
     if(!cap.isOpened()){
         Console::LogError("VideoCapture() failed");
@@ -57,18 +59,23 @@ void CaptureThread::Start(){
         cap >> frame;
         if (frame.empty()) continue;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-        this->toMain_buffer_ptr->push(frame);
 
-        if(framesCounter == 60){
+        this->toMain_buffer_ptr->put(frame);
+
+        if(framesCounter == this->countPicker){
             this->toStitch_buffer_ptr->put(frame);
             framesCounter = 0;
         } else {
             framesCounter++;
         }
+        
 
+        // Uncomment this operation only if you are using a video test
+        std::this_thread::sleep_for(0.02s);
         this->termSig_ptr->read(isTerminated);
     }
 
     this->toStitch_buffer_ptr->put(frame);
+
     cout << "---- CAPTURE THREAD STOPPED ----" << endl;
 }

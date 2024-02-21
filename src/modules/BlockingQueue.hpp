@@ -14,11 +14,15 @@ class BlockingQueue
         std::condition_variable condNotEmpty;
         std::condition_variable condNotFull;
         int count; // Guard with Mutex
-        const int MAX{5};
+        const int MAX{10};
 
     public:
 
-        bool changed;
+        bool changed = false;
+
+        unsigned int size(){
+            return private_std_queue.size();
+        }
 
         void put(T new_value) {
             std::unique_lock<std::mutex> lk(mut);

@@ -15,10 +15,11 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     // Window and Graphics Context
-    GLFWwindow* window = glfwCreateWindow(1080, 720, "Fearless Flyer", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Fearless Flyer", nullptr, nullptr);
     if (window == nullptr){
         //Handling
     }
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
@@ -65,33 +66,24 @@ int main() {
     {
         glfwPollEvents();
 
-        // Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        //WINDOWS
-        if(handler.checks.show_console){
-            handler.ShowConsole();
-        }
 
         {
-            handler.SettingsWindow();
-        }
-
-        if(handler.checks.show_map_viewer){
             handler.MapWindow();
-        }
-
-        if(handler.checks.show_capture_viewer && handler.checks.isCapturing){
+            handler.SettingsWindow();
             handler.CaptureWindow();
-        }
 
-        if(handler.checks.show_help_window)
-        {
-            ImGui::ShowDemoWindow(&handler.checks.show_demo_window);
+            if(handler.checks.show_console){
+                handler.ShowConsole();
+            }
+
+            if(handler.checks.show_stats){
+                handler.StatsWindows();
+            }
         }
-        // WINDOWS
 
         // RENDERING
         ImGui::Render();

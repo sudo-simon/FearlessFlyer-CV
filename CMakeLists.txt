@@ -24,6 +24,13 @@ find_package(OpenCV REQUIRED)
 set(OpenGL_GL_PREFERENCE "GLVND")
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(OpenMP)
+
+if(OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (CMAKE_EXE_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++20")
@@ -33,9 +40,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 file(GLOB SOURCE_FILES 
     "${SRC_DIR}/Main.cpp"
-    "${MOD_DIR}/GUI/*.cpp"
     "${MOD_DIR}/Network/*.cpp"
     "${MOD_DIR}/Console/*.cpp"
+    "${MOD_DIR}/Canvas/*.cpp"
     "${MOD_DIR}/Threading/CaptureThread.cpp" #commentabile
     "${MOD_DIR}/Threading/PathfinderThread.cpp"
     "${MOD_DIR}/Threading/RecognizerThread.cpp"
@@ -58,12 +65,3 @@ target_link_libraries(FF-CV OpenGL::GL)
 target_link_libraries(FF-CV glfw)
 target_link_libraries(FF-CV imgui)
 target_link_libraries(FF-CV p2b)
-
-
-#~~~~~ Test binary
-add_executable(Test "${SRC_DIR}/Test.cpp" "${MOD_DIR}/Threading/CaptureThread.cpp")
-target_link_libraries(Test ${OpenCV_LIBS})
-target_link_libraries(Test OpenGL::GL)
-target_link_libraries(Test glfw)
-target_link_libraries(Test imgui)
-target_link_libraries(Test p2b)
