@@ -24,7 +24,7 @@ sudo ./FF-CH
 
 ## Requirements
 
-### G++ and CMake
+### g++-12 and CMake
 ```console
 sudo apt install build-essential
 sudo apt install cmake
