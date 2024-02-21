@@ -388,9 +388,6 @@ void Canvas::updateDisplay() {
 
     cv::Mat tmp_display = this->removeBlackBorders(this->canvas);
 
-    //! Slows down the execution a lot if done here
-    //cv::imwrite("result.jpeg", tmp_display);
-
     resizeWithRatio(tmp_display, this->display_h*0.85, this->display_w*0.85);
 
     this->display = tmp_display;

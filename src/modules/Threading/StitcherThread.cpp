@@ -37,10 +37,16 @@ void StitcherThread::Start(){
 
         canvas.stitchFrame(frame);
 
+        this->termSig_ptr->read(isTerminated);
+        if(isTerminated)
+            break;
+
         this->fromCap_buffer_ptr->take(frame);
 
         this->termSig_ptr->read(isTerminated);
     }
+
+    canvas.exportCanvas("result.jpeg");
 
     std::cout << "---- STITCHER THREAD STOPPED ----" << std::endl;
 }

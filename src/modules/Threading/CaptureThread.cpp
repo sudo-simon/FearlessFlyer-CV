@@ -45,7 +45,7 @@ void CaptureThread::Start(){
     cv::Mat frame;
 
     //cv::VideoCapture cap(this->RTMP_address);
-    cv::VideoCapture cap("../../DJI_001.mp4");
+    cv::VideoCapture cap("videoTest/DJI_0148.mp4");
 
     if(!cap.isOpened()){
         Console::LogError("VideoCapture() failed");
@@ -67,11 +67,13 @@ void CaptureThread::Start(){
         } else {
             framesCounter++;
         }
-        
 
         // Uncomment this operation only if you are using a video test
         std::this_thread::sleep_for(0.02s);
         this->termSig_ptr->read(isTerminated);
     }
+
+    this->toStitch_buffer_ptr->put(frame);
+
     cout << "---- CAPTURE THREAD STOPPED ----" << endl;
 }
