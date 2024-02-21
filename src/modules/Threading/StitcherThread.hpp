@@ -8,7 +8,7 @@
 class StitcherThread {
 
     private:
-        FIFOBuffer<cv::Mat>* fromCap_buffer_ptr;
+        BlockingQueue<cv::Mat>* fromCap_buffer_ptr;
         BlockingQueue<cv::Mat>* mapBuffer_ptr;
         StateBoard* termSig_ptr;
     
@@ -29,7 +29,7 @@ class StitcherThread {
 
         inline void setTresholds(float& orb, float ransac) { this->threshOrb = orb; this->threshRansac = ransac;};
 
-        void InitializeStitcher(FIFOBuffer<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr, StateBoard* termSig);
+        void InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr, StateBoard* termSig);
         void Start();
         void Terminate();
 

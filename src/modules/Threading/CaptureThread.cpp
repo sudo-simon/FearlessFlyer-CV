@@ -30,7 +30,7 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 }
 // ----------------------------------------------------------------
 
-void CaptureThread::InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr,  StateBoard* termSig){
+void CaptureThread::InitializeCapturer(std::string RTMP_addr, BlockingQueue<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr,  StateBoard* termSig){
     this->RTMP_address = RTMP_addr;
     this->toMain_buffer_ptr = main_buffer_ptr;
     this->toStitch_buffer_ptr = stitch_buffer_ptr;
@@ -45,7 +45,7 @@ void CaptureThread::Start(){
     cv::Mat frame;
 
     //cv::VideoCapture cap(this->RTMP_address);
-    cv::VideoCapture cap("../../DJI_001.mp4");
+    cv::VideoCapture cap("videoTest/DJI_0148.mp4");
 
     if(!cap.isOpened()){
         Console::LogError("VideoCapture() failed");
@@ -60,10 +60,10 @@ void CaptureThread::Start(){
         if (frame.empty()) continue;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
 
-        this->toMain_buffer_ptr->push(frame);
+        this->toMain_buffer_ptr->put(frame);
 
         if(framesCounter == this->countPicker){
-            this->toStitch_buffer_ptr->push(frame);
+            this->toStitch_buffer_ptr->put(frame);
             framesCounter = 0;
         } else {
             framesCounter++;
@@ -74,11 +74,8 @@ void CaptureThread::Start(){
         std::this_thread::sleep_for(0.02s);
         this->termSig_ptr->read(isTerminated);
     }
-<<<<<<< HEAD
 
-    this->toStitch_buffer_ptr->push(frame);
+    this->toStitch_buffer_ptr->put(frame);
 
-=======
->>>>>>> parent of 50fa311 (Export)
     cout << "---- CAPTURE THREAD STOPPED ----" << endl;
 }
