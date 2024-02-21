@@ -39,17 +39,19 @@ void StitcherThread::Start(){
 
         canvas.stitchFrame(frame);
 
+<<<<<<< HEAD
         this->termSig_ptr->read(isTerminated);
         if(isTerminated)
             break;
 
         if(fromCap_buffer_ptr->getSize()>0)
             this->fromCap_buffer_ptr->pop(&frame);
+=======
+        this->fromCap_buffer_ptr->take(frame);
+>>>>>>> parent of 50fa311 (Export)
 
         this->termSig_ptr->read(isTerminated);
     }
-
-    canvas.exportCanvas("result.jpeg");
 
     std::cout << "---- STITCHER THREAD STOPPED ----" << std::endl;
 }
