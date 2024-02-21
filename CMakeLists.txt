@@ -40,7 +40,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 file(GLOB SOURCE_FILES 
     "${SRC_DIR}/Main.cpp"
-    "${MOD_DIR}/GUI/*.cpp"
     "${MOD_DIR}/Network/*.cpp"
     "${MOD_DIR}/Console/*.cpp"
     "${MOD_DIR}/Canvas/*.cpp"

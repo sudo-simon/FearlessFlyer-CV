@@ -12,12 +12,15 @@ sh Release_build.sh
 
 **3. Run: execute FF-SH on *build* folder**
 
-*sudo required for correct nginx functioning*
+*Optional: copy scripts/imgui.ini on build to enable our options*
+
+*Mandatory: sudo required for correct nginx functioning*
 
 ```console
 cd build
 sudo ./FF-CH
 ```
+
 
 ## Requirements
 
