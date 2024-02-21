@@ -30,7 +30,7 @@ void notifyThreadExit(uint8_t* shmem_ptr){
 }
 // ----------------------------------------------------------------
 
-void CaptureThread::InitializeCapturer(std::string RTMP_addr, BlockingQueue<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr,  StateBoard* termSig){
+void CaptureThread::InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr,  StateBoard* termSig){
     this->RTMP_address = RTMP_addr;
     this->toMain_buffer_ptr = main_buffer_ptr;
     this->toStitch_buffer_ptr = stitch_buffer_ptr;
@@ -59,10 +59,11 @@ void CaptureThread::Start(){
         cap >> frame;
         if (frame.empty()) continue;
         cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-        this->toMain_buffer_ptr->put(frame);
-        
+
+        this->toMain_buffer_ptr->push(frame);
+
         if(framesCounter == this->countPicker){
-            this->toStitch_buffer_ptr->put(frame);
+            this->toStitch_buffer_ptr->push(frame);
             framesCounter = 0;
         } else {
             framesCounter++;
@@ -73,7 +74,7 @@ void CaptureThread::Start(){
         this->termSig_ptr->read(isTerminated);
     }
 
-    this->toStitch_buffer_ptr->put(frame);
+    this->toStitch_buffer_ptr->push(frame);
 
     cout << "---- CAPTURE THREAD STOPPED ----" << endl;
 }

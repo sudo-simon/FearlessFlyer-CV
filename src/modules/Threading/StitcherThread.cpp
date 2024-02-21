@@ -28,7 +28,9 @@ void StitcherThread::Start(){
     cv::Mat frame;
     std::cout << "---- STITCHER THREAD STARTED ----" << std::endl;
 
-    this->fromCap_buffer_ptr->take(frame);
+    
+    if(fromCap_buffer_ptr->getSize()>0)
+        this->fromCap_buffer_ptr->pop(&frame);
 
     Canvas canvas(1920,1080, frame.cols, frame.rows, this->mapBuffer_ptr, this->threshOrb, this->threshRansac);
 
@@ -41,7 +43,8 @@ void StitcherThread::Start(){
         if(isTerminated)
             break;
 
-        this->fromCap_buffer_ptr->take(frame);
+        if(fromCap_buffer_ptr->getSize()>0)
+            this->fromCap_buffer_ptr->pop(&frame);
 
         this->termSig_ptr->read(isTerminated);
     }
@@ -55,7 +58,7 @@ void StitcherThread::Terminate(){
     std::terminate();
 }
 
-void StitcherThread::InitializeStitcher(BlockingQueue<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr, StateBoard* termSig){
+void StitcherThread::InitializeStitcher(FIFOBuffer<cv::Mat>* fifo_ptr, BlockingQueue<cv::Mat>* buffer_ptr, StateBoard* termSig){
     this->fromCap_buffer_ptr = fifo_ptr;
     this->mapBuffer_ptr = buffer_ptr;
     this->termSig_ptr = termSig;

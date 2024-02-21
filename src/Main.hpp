@@ -37,8 +37,8 @@ class WindowsHandler{
 
         NetConf network;
 
-        BlockingQueue<cv::Mat> fifo_buffer_cap;
-        BlockingQueue<cv::Mat> fifo_buffer_sti;
+        FIFOBuffer<cv::Mat> fifo_buffer_cap;
+        FIFOBuffer<cv::Mat> fifo_buffer_sti;
         BlockingQueue<cv::Mat> mapBuffer;
         StateBoard termSig;
 
@@ -99,6 +99,9 @@ class WindowsHandler{
             network.RTMPconfig();
             network.BindRtmpLink();
 
+            fifo_buffer_cap = FIFOBuffer<cv::Mat>(16);
+            fifo_buffer_sti = FIFOBuffer<cv::Mat>(16);
+
             bg_color = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
             this->stitcher.InitializeStitcher(&fifo_buffer_sti, &mapBuffer, &termSig);
             this->capturer.InitializeCapturer(network.GetExternalRtmpLink(), &fifo_buffer_cap, &fifo_buffer_sti, &termSig);
@@ -133,8 +136,8 @@ class WindowsHandler{
         {
             window_flags = ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoDocking;
             ImGui::Begin("Live");   
-            if(fifo_buffer_cap.changed){
-                fifo_buffer_cap.take(frame); 
+            if(fifo_buffer_cap.getSize()>0){
+                fifo_buffer_cap.pop(&frame); 
                 ImVec2 capWindowSize = ImGui::GetWindowSize();
                 resizeWithRatio(frame, capWindowSize.y-30, capWindowSize.x-30);
             }

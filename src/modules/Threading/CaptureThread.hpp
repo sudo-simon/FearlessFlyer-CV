@@ -19,8 +19,8 @@ class CaptureThread {
 
     private:
         string RTMP_address;
-        BlockingQueue<cv::Mat>* toMain_buffer_ptr;
-        BlockingQueue<cv::Mat>* toStitch_buffer_ptr;
+        FIFOBuffer<cv::Mat>* toMain_buffer_ptr;
+        FIFOBuffer<cv::Mat>* toStitch_buffer_ptr;
         StateBoard* termSig_ptr;
 
         int countPicker;
@@ -31,7 +31,7 @@ class CaptureThread {
         ~CaptureThread() {}
 
 
-        void InitializeCapturer(std::string RTMP_addr, BlockingQueue<cv::Mat>* main_buffer_ptr, BlockingQueue<cv::Mat>* stitch_buffer_ptr, StateBoard* termSig);
+        void InitializeCapturer(std::string RTMP_addr, FIFOBuffer<cv::Mat>* main_buffer_ptr, FIFOBuffer<cv::Mat>* stitch_buffer_ptr, StateBoard* termSig);
 
         void setCountPicker(int count){ this->countPicker = count;};
 
